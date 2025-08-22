@@ -10,9 +10,11 @@ import {
   AlertCircle,
   Download,
   Upload,
-  History
+  History,
+  RefreshCw
 } from 'lucide-react';
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
+import { ewasteAPI } from '../../services/api';
 
 const QRScanner = ({ isOpen, onClose, onScan }) => {
   const [hasPermission, setHasPermission] = useState(null);
@@ -24,6 +26,12 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
   const [manualSerial, setManualSerial] = useState('');
   const [statusUpdate, setStatusUpdate] = useState('in transit');
   const [scanMode, setScanMode] = useState('qr');
+  
+  // New state for e-waste item details
+  const [ewasteItem, setEwasteItem] = useState(null);
+  const [isLoadingItem, setIsLoadingItem] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  
   const fileInputRef = useRef(null);
   const barcodeContainerRef = useRef(null);
 
@@ -48,7 +56,39 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
     }
   }, [isOpen]);
 
-  const handleScan = (result) => {
+  // Function to fetch e-waste item details from backend
+  const fetchEwasteItem = async (serial) => {
+    setIsLoadingItem(true);
+    setError(null);
+    try {
+      const item = await ewasteAPI.getBySerial(serial);
+      setEwasteItem(item);
+      return item;
+    } catch (err) {
+      setError(err.message);
+      setEwasteItem(null);
+      return null;
+    } finally {
+      setIsLoadingItem(false);
+    }
+  };
+
+  // Function to update e-waste status in backend
+  const updateEwasteStatus = async (serial, newStatus) => {
+    setIsUpdatingStatus(true);
+    try {
+      const updatedItem = await ewasteAPI.updateStatusBySerial(serial, newStatus);
+      setEwasteItem(updatedItem);
+      return updatedItem;
+    } catch (err) {
+      setError(err.message);
+      return null;
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  const handleScan = async (result) => {
     if (result) {
       setScanResult(result);
       const newHistory = [
@@ -67,24 +107,8 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
         onScan(result);
       }
 
-      // Try to interpret the result as a serial and update localStorage status
-      try {
-        const STORAGE_KEY = 'ewaste_items';
-        const raw = localStorage.getItem(STORAGE_KEY);
-        const items = raw ? JSON.parse(raw) : [];
-        const idx = items.findIndex((i) => i.serial === result);
-        if (idx >= 0) {
-          // Cycle status for demo: waiting -> in transit -> processing -> done
-          const order = ['waiting for pickup', 'in transit', 'processing', 'done'];
-          const current = items[idx].status || 'waiting for pickup';
-          const next = order[(order.indexOf(current) + 1) % order.length];
-          items[idx].status = next;
-          items[idx].updatedAt = new Date().toISOString();
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-        }
-      } catch (_e) {
-        // ignore
-      }
+      // Fetch e-waste item details from backend
+      await fetchEwasteItem(result);
     }
   };
 
@@ -98,10 +122,9 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = () => {
       // In a real app, you would use a QR code decoding library here
       // For demo purposes, we'll simulate a scan result
-      console.log(e);
       const simulatedResult = `file-upload-${Date.now()}`;
       handleScan(simulatedResult);
     };
@@ -111,11 +134,13 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
   const handleRetry = () => {
     setScanResult(null);
     setError(null);
+    setEwasteItem(null);
   };
 
   const handleClose = () => {
     setScanResult(null);
     setError(null);
+    setEwasteItem(null);
     setIsViewingHistory(false);
     onClose();
   };
@@ -145,7 +170,7 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
           const code = data?.codeResult?.code;
           if (code) handleScan(code);
         });
-      } catch (e) {
+      } catch {
         setError('Failed to start barcode scanner');
       }
     };
@@ -153,7 +178,7 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
 
     return () => {
       active = false;
-      try { Quagga.offDetected(); Quagga.stop(); } catch (_e) {}
+      try { Quagga.offDetected(); Quagga.stop(); } catch { /* ignore cleanup errors */ }
     };
   }, [isOpen, hasPermission, isLoading, scanMode]);
 
@@ -201,6 +226,68 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
           <div className="bg-white p-3 rounded-lg border border-green-200 w-full mb-4">
             <p className="text-sm font-mono break-words">{scanResult}</p>
           </div>
+          
+          {/* Show e-waste item details if available */}
+          {ewasteItem && (
+            <div className="w-full mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="font-semibold text-blue-900 mb-2">Item Details:</h4>
+              <div className="text-sm text-blue-800 space-y-1">
+                <p><strong>Type:</strong> {ewasteItem.itemType}</p>
+                <p><strong>Status:</strong> {ewasteItem.status}</p>
+                <p><strong>Pickup Address:</strong> {ewasteItem.pickupAddress}</p>
+                {ewasteItem.brand && <p><strong>Brand:</strong> {ewasteItem.brand}</p>}
+                {ewasteItem.weight && <p><strong>Weight:</strong> {ewasteItem.weight}</p>}
+              </div>
+              
+              {/* Status Update Section */}
+              <div className="mt-3 pt-3 border-t border-blue-200">
+                <label className="block text-sm font-medium text-blue-900 mb-1">Update Status:</label>
+                <div className="flex gap-2">
+                  <select
+                    value={statusUpdate}
+                    onChange={(e) => setStatusUpdate(e.target.value)}
+                    className="flex-1 rounded-lg border px-2 py-1 text-sm"
+                  >
+                    {['waiting for pickup', 'in transit', 'processing', 'done'].map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => updateEwasteStatus(ewasteItem.serial, statusUpdate)}
+                    disabled={isUpdatingStatus || ewasteItem.status === statusUpdate}
+                    className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                  >
+                    {isUpdatingStatus ? (
+                      <>
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      'Update'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Loading state for item details */}
+          {isLoadingItem && (
+            <div className="w-full mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-center">
+                <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                <span className="text-sm text-gray-600">Loading item details...</span>
+              </div>
+            </div>
+          )}
+          
+          {/* Error state for item details */}
+          {error && !ewasteItem && (
+            <div className="w-full mb-4 p-3 bg-red-50 rounded-lg border border-red-200">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+          
           <div className="flex space-x-3">
             <button
               onClick={handleRetry}
@@ -364,9 +451,9 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
                   />
                 </div>
 
-                {/* Manual serial entry for barcode simulation */}
+                {/* Manual serial entry for testing */}
                 <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Enter Serial to Update Status</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Test with Manual Serial Entry</label>
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -375,36 +462,14 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
                       placeholder="e.g., EW-..."
                       className="flex-1 rounded-lg border px-3 py-2 text-sm"
                     />
-                    <select
-                      value={statusUpdate}
-                      onChange={(e) => setStatusUpdate(e.target.value)}
-                      className="rounded-lg border px-3 py-2 text-sm"
-                    >
-                      {['waiting for pickup','in transit','processing','done'].map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
                     <button
                       onClick={() => {
                         if (!manualSerial) return;
-                        try {
-                          const STORAGE_KEY = 'ewaste_items';
-                          const raw = localStorage.getItem(STORAGE_KEY);
-                          const items = raw ? JSON.parse(raw) : [];
-                          const idx = items.findIndex((i) => i.serial === manualSerial);
-                          if (idx >= 0) {
-                            items[idx].status = statusUpdate;
-                            items[idx].updatedAt = new Date().toISOString();
-                            localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-                            handleScan(manualSerial);
-                          } else {
-                            alert('Serial not found');
-                          }
-                        } catch (_e) {}
+                        handleScan(manualSerial);
                       }}
-                      className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm"
+                      className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
                     >
-                      Update
+                      Test Scan
                     </button>
                   </div>
                 </div>

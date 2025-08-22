@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import JsBarcode from 'jsbarcode';
+import { ewasteAPI } from '../services/api';
 
 const QRGenerator = () => {
   const [qrData, setQrData] = useState({
@@ -19,31 +20,17 @@ const QRGenerator = () => {
   });
   const [generatedSerial, setGeneratedSerial] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
   const labelRef = useRef(null);
   const barcodeRef = useRef(null);
 
-  // Helpers for localStorage persistence
-  const STORAGE_KEY = 'ewaste_items';
-  const readItems = () => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (_e) {
-      return [];
-    }
-  };
-  const writeItems = (items) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  };
-  const upsertItem = (item) => {
-    const items = readItems();
-    const idx = items.findIndex((i) => i.serial === item.serial);
-    if (idx >= 0) {
-      items[idx] = item;
-    } else {
-      items.unshift(item);
-    }
-    writeItems(items);
+  // Generate a unique serial number
+  const generateSerial = () => {
+    const ts = Date.now().toString(36).toUpperCase();
+    const rand = Math.floor(Math.random() * 46655).toString(36).toUpperCase();
+    return `EW-${ts}-${rand}`;
   };
 
   const generatedItem = useMemo(() => {
@@ -115,7 +102,7 @@ const QRGenerator = () => {
           displayValue: false,
           margin: 0
         });
-      } catch (_e) {
+      } catch {
         // ignore
       }
     }
@@ -135,32 +122,33 @@ const QRGenerator = () => {
     'Other'
   ];
 
-  const generateLabel = () => {
+  const generateLabel = async () => {
     if (!qrData.itemType) {
-      alert('Please select an Item Type');
+      setError('Please select an Item Type');
       return;
     }
     if (qrData.itemType === 'Other' && !qrData.customItemType) {
-      alert('Please specify the Item Type');
+      setError('Please specify the Item Type');
       return;
     }
 
     setIsGenerating(true);
+    setError(null);
+    setSuccess(null);
     
     // Generate a serial number
-    const ts = Date.now().toString(36).toUpperCase();
-    const rand = Math.floor(Math.random() * 46655).toString(36).toUpperCase();
-    const serial = `EW-${ts}-${rand}`;
+    const serial = generateSerial();
     setGeneratedSerial(serial);
 
-    // Persist item with initial status
+    // Prepare data for backend
     const normalizedType = qrData.itemType === 'Other' ? qrData.customItemType : qrData.itemType;
     const conditionLower = (qrData.condition || '').toLowerCase();
     const numericWeightValue = Number.parseFloat(qrData.weightValue || '0') || 0;
     const numericWeightKg = (qrData.weightUnit === 'kg') ? numericWeightValue : (numericWeightValue / 1000);
     const hazardousTypes = ['battery', 'ups', 'crt', 'tube', 'bulb', 'toner', 'ink'];
     const reusableTypes = ['laptop','desktop','monitor','mobile','phone','tablet'];
-    const classification = hazardousTypes.some(t => (normalizedType || '').toLowerCase().includes(t)) || conditionLower.includes('leak')
+    // Classification logic (kept for future use)
+    const _classification = hazardousTypes.some(t => (normalizedType || '').toLowerCase().includes(t)) || conditionLower.includes('leak')
       ? 'hazardous'
       : (reusableTypes.some(t => (normalizedType || '').toLowerCase().includes(t)) && (conditionLower.includes('working') || conditionLower.includes('good')) && numericWeightKg <= 25)
         ? 'reusable'
@@ -168,44 +156,50 @@ const QRGenerator = () => {
 
     const newItem = {
       serial,
-      type: normalizedType,
-      weightValue: qrData.weightValue,
-      weightUnit: qrData.weightUnit,
+      itemType: normalizedType,
+      brand: qrData.brand,
+      model: qrData.model,
+      age: qrData.age,
+      weight: `${qrData.weightValue} ${qrData.weightUnit}`,
       condition: qrData.condition,
       pickupAddress: qrData.pickupAddress,
-      date: qrData.date,
-      classification,
-      estimatedPrice: (() => {
-        const typeLower = (normalizedType || '').toLowerCase();
-        const condLower = (qrData.condition || '').toLowerCase();
-        let basePerKg = 15;
-        if (/(laptop|desktop|computer|monitor|tablet|mobile|phone)/.test(typeLower)) basePerKg = 60;
-        if (/(printer|scanner|tv|television)/.test(typeLower)) basePerKg = 35;
-        if (/(battery|ups|crt|tube|bulb|toner|ink)/.test(typeLower)) basePerKg = 10;
-        let m = 0.6;
-        if (/(working|good|ok)/.test(condLower)) m = 1.0;
-        if (/(damaged|broken|dead|faulty)/.test(condLower)) m = 0.4;
-        if (/(leak|hazard)/.test(condLower)) m = 0.2;
-        const kg = (qrData.weightUnit === 'kg') ? (Number.parseFloat(qrData.weightValue || '0') || 0) : ((Number.parseFloat(qrData.weightValue || '0') || 0) / 1000);
-        const price = Math.max(0, basePerKg * kg * m);
-        return Math.round(price * 100) / 100;
-      })(),
+      date: new Date(qrData.date),
+      shortNote: qrData.notes,
       status: 'waiting for pickup',
-      createdAt: new Date().toISOString()
+      // Note: donorId will need to be set when user authentication is implemented
+      // For now, we'll create a placeholder donor or handle this differently
     };
-    upsertItem(newItem);
 
-    setTimeout(() => setIsGenerating(false), 300);
+    try {
+      // Save to backend
+      setIsSaving(true);
+      await ewasteAPI.create(newItem);
+      setSuccess('E-waste item created successfully! QR code generated.');
+      
+      // Also save to localStorage for backward compatibility
+      const STORAGE_KEY = 'ewaste_items';
+      const existingItems = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      existingItems.unshift(newItem);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(existingItems));
+      
+    } catch (err) {
+      setError(`Failed to save to backend: ${err.message}`);
+      // Still generate the label locally even if backend save fails
+      console.error('Backend save failed:', err);
+    } finally {
+      setIsSaving(false);
+      setIsGenerating(false);
+    }
   };
 
   const downloadLabel = async () => {
     try {
       if (!generatedSerial) {
-        alert('Please generate a label first.');
+        setError('Please generate a label first.');
         return;
       }
       if (!labelRef.current) {
-        alert('Label not found on screen.');
+        setError('Label not found on screen.');
         return;
       }
       const canvas = await html2canvas(labelRef.current, { backgroundColor: '#ffffff', scale: 2, useCORS: true });
@@ -231,7 +225,7 @@ const QRGenerator = () => {
       }
     } catch (err) {
       console.error('Download failed', err);
-      alert('Failed to download label. Please try again.');
+      setError('Failed to download label. Please try again.');
     }
   };
 
@@ -251,6 +245,8 @@ const QRGenerator = () => {
       picture: null,
     });
     setGeneratedSerial('');
+    setError(null);
+    setSuccess(null);
   };
 
   return (
@@ -262,6 +258,19 @@ const QRGenerator = () => {
           Generate QR codes for e-waste items to track their lifecycle and management process.
         </p>
       </div>
+
+      {/* Error and Success Messages */}
+      {error && (
+        <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+          <p className="text-red-800">{error}</p>
+        </div>
+      )}
+      
+      {success && (
+        <div className="rounded-lg bg-green-50 border border-green-200 p-4">
+          <p className="text-green-800">{success}</p>
+        </div>
+      )}
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Form Section */}
@@ -365,7 +374,7 @@ const QRGenerator = () => {
 
               {/* Pickup Address */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Pickup Address</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Pickup Address *</label>
                 <input
                   type="text"
                   value={qrData.pickupAddress}
@@ -411,10 +420,10 @@ const QRGenerator = () => {
             <div className="flex gap-3 pt-4">
               <button
                 onClick={generateLabel}
-                disabled={isGenerating || !qrData.itemType || (qrData.itemType === 'Other' && !qrData.customItemType)}
-                className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white"
+                disabled={isGenerating || isSaving || !qrData.itemType || (qrData.itemType === 'Other' && !qrData.customItemType) || !qrData.pickupAddress}
+                className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isGenerating ? 'Generating...' : 'Generate Label'}
+                {isGenerating ? 'Generating...' : isSaving ? 'Saving...' : 'Generate Label'}
               </button>
               <button
                 onClick={resetForm}
@@ -485,7 +494,10 @@ const QRGenerator = () => {
                   >
                     Download Label PNG
                   </button>
-                  <p className="text-xs text-gray-500">Tip: Vendor can scan this barcode to update status.</p>
+                  <p className="text-xs text-gray-500">
+                    Tip: Vendor can scan this barcode to update status. 
+                    {success && ' Item has been saved to the database.'}
+                  </p>
                 </div>
               </div>
             ) : (

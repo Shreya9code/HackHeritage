@@ -1,0 +1,59 @@
+import axios from 'axios';
+
+const API_BASE_URL = 'http://localhost:5000/api';
+
+// Create axios instance with base configuration
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// E-waste API functions
+export const ewasteAPI = {
+  // Get e-waste by serial number (for QR scanning)
+  getBySerial: async (serial) => {
+    try {
+      const response = await api.get(`/ewastes/serial/${serial}`);
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 404) {
+        throw new Error('E-waste item not found');
+      }
+      throw new Error(error.response?.data?.error || 'Failed to fetch e-waste item');
+    }
+  },
+
+  // Update status by serial number
+  updateStatusBySerial: async (serial, status) => {
+    try {
+      const response = await api.put(`/ewastes/serial/${serial}/status`, { status });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to update status');
+    }
+  },
+
+  // Create new e-waste item
+  create: async (ewasteData) => {
+    try {
+      const response = await api.post('/ewastes', ewasteData);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to create e-waste item');
+    }
+  },
+
+  // Get all e-waste items
+  getAll: async () => {
+    try {
+      const response = await api.get('/ewastes');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to fetch e-waste items');
+    }
+  },
+};
+
+export default api;
