@@ -304,7 +304,7 @@ function DonorDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Link
           to="/qr-generator"
           className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
@@ -316,21 +316,6 @@ function DonorDashboard() {
             <div>
               <h3 className="font-semibold text-gray-900">Generate QR</h3>
               <p className="text-sm text-gray-600">Create labels for new items</p>
-            </div>
-          </div>
-        </Link>
-
-        <Link
-          to="/schedule"
-          className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
-        >
-          <div className="flex items-center">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-              <span className="text-blue-600 text-xl">📅</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Schedule Pickup</h3>
-              <p className="text-sm text-gray-600">Arrange item collection</p>
             </div>
           </div>
         </Link>

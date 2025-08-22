@@ -1,6 +1,7 @@
 import {  useMemo, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { QRCodeSVG } from 'qrcode.react';
+import { ewasteAPI } from '../services/api';
 
 const QRGenerator = () => {
   const [qrData, setQrData] = useState({
@@ -19,6 +20,8 @@ const QRGenerator = () => {
   });
   const [generatedSerial, setGeneratedSerial] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const labelRef = useRef(null);
 
   // Helpers for localStorage persistence
@@ -217,6 +220,51 @@ const QRGenerator = () => {
     }
   };
 
+  const submitToDatabase = async () => {
+    if (!generatedItem) {
+      alert('Please generate a label first.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Get user ID from localStorage
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        alert('User not found. Please log in again.');
+        return;
+      }
+      
+      const ewasteData = {
+        donorId: userId,
+        serial: generatedItem.serial,
+        itemType: generatedItem.type,
+        brand: qrData.brand,
+        model: qrData.model,
+        age: qrData.age,
+        weightValue: generatedItem.weightValue,
+        weightUnit: generatedItem.weightUnit,
+        condition: generatedItem.condition,
+        pickupAddress: generatedItem.pickupAddress,
+        date: new Date(generatedItem.date),
+        pictureUrl: qrData.picture ? URL.createObjectURL(qrData.picture) : '',
+        shortNote: qrData.notes,
+        classification: generatedItem.classification,
+        estimatedPrice: generatedItem.estimatedPrice,
+        status: generatedItem.status
+      };
+
+      await ewasteAPI.create(ewasteData);
+      setIsSubmitted(true);
+      alert('E-waste item successfully submitted to database!');
+    } catch (error) {
+      console.error('Error submitting to database:', error);
+      alert('Failed to submit to database. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const resetForm = () => {
     setQrData({
       itemType: '',
@@ -233,6 +281,7 @@ const QRGenerator = () => {
       picture: null,
     });
     setGeneratedSerial('');
+    setIsSubmitted(false);
   };
 
   return (
@@ -477,7 +526,22 @@ const QRGenerator = () => {
                   >
                     Download Label PNG
                   </button>
-                                     <p className="text-xs text-gray-500">Tip: Vendor can scan this QR code to update status.</p>
+                  
+                  {!isSubmitted ? (
+                    <button
+                      onClick={submitToDatabase}
+                      disabled={isSubmitting}
+                      className="w-full rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 disabled:bg-blue-400"
+                    >
+                      {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                    </button>
+                  ) : (
+                    <div className="w-full rounded-lg bg-green-100 px-4 py-2 text-green-800 font-semibold">
+                      ✓ Submitted Successfully
+                    </div>
+                  )}
+                  
+                  <p className="text-xs text-gray-500">Tip: Vendor can scan this QR code to update status.</p>
                 </div>
               </div>
             ) : (
