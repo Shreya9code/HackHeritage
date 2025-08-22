@@ -1,7 +1,37 @@
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import Header from '../components/common/Header';
+import Footer from '../components/common/Footer';
+import Dashboard from './Dashboard';
+import Inventory from './Inventory';
+import Schedule from './Schedule';
+import Compliance from './Compliance';
+import QRGenerator from './QRGenerator';
+import Analytics from './Analytics';
+import Campaigns from './Campaigns';
 
 const Home = () => {
-  const navigate = useNavigate();
+  const [activePage, setActivePage] = useState('dashboard');
+
+  const renderPage = () => {
+    switch(activePage) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'inventory':
+        return <Inventory />;
+      case 'schedule':
+        return <Schedule />;
+      case 'compliance':
+        return <Compliance />;
+      case 'qr-generator':
+        return <QRGenerator />;
+      case 'analytics':
+        return <Analytics />;
+      case 'campaigns':
+        return <Campaigns />;
+      default:
+        return <Dashboard />;
+    }
+  };
 
   const HeroSection = () => (
     <section className="relative overflow-hidden rounded-2xl border border-emerald-200/60 bg-white/70 p-8 shadow-xl backdrop-blur supports-[backdrop-filter]:bg-white/50 md:p-10">
@@ -11,7 +41,7 @@ const Home = () => {
       <div className="relative z-10 grid items-center gap-8 md:grid-cols-2">
         <div className="space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300/60 !bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">
-            <span>♻️</span>
+            <span>♻</span>
             <span>Smart E-waste lifecycle</span>
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl md:text-5xl">
@@ -22,17 +52,17 @@ const Home = () => {
           </p>
           <div className="flex flex-wrap gap-3 pt-2">
             <button
-              onClick={() => navigate('/schedule')}
+              onClick={() => setActivePage('schedule')}
               className="inline-flex items-center justify-center rounded-lg !bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:!bg-emerald-700 hover:shadow-md active:translate-y-0">
               Schedule Pickup
             </button>
             <button
-              onClick={() => navigate('/qr-generator')}
+              onClick={() => setActivePage('qr-generator')}
               className="inline-flex items-center justify-center rounded-lg border border-emerald-300 bg-white/70 px-4 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:!bg-emerald-50 hover:shadow-md active:translate-y-0">
               Generate QR
             </button>
             <button
-              onClick={() => navigate('/inventory')}
+              onClick={() => setActivePage('inventory')}
               className="inline-flex items-center justify-center rounded-lg border border-teal-300 bg-white/70 px-4 py-2.5 text-sm font-semibold text-teal-700 shadow-sm transition hover:-translate-y-0.5 hover:!bg-teal-50 hover:shadow-md active:translate-y-0">
               View Inventory
             </button>
@@ -56,88 +86,27 @@ const Home = () => {
     </section>
   );
 
-  const FeaturesSection = () => (
-    <section className="space-y-8">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Key Features</h2>
-        <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-          Everything you need to manage e-waste efficiently and sustainably
-        </p>
-      </div>
-      
-      <div className="grid md:grid-cols-3 gap-6">
-        <div className="bg-white/70 rounded-xl p-6 border border-emerald-200/60 shadow-sm">
-          <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
-            <span className="text-2xl">📱</span>
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">QR Code Tracking</h3>
-          <p className="text-gray-600">
-            Generate unique QR codes for each e-waste item and track their complete lifecycle from collection to disposal.
-          </p>
-        </div>
-        
-        <div className="bg-white/70 rounded-xl p-6 border border-emerald-200/60 shadow-sm">
-          <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
-            <span className="text-2xl">📅</span>
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Smart Scheduling</h3>
-          <p className="text-gray-600">
-            Schedule certified pickups with real-time tracking and automated notifications for efficient collection.
-          </p>
-        </div>
-        
-        <div className="bg-white/70 rounded-xl p-6 border border-emerald-200/60 shadow-sm">
-          <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
-            <span className="text-2xl">📊</span>
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Analytics & Compliance</h3>
-          <p className="text-gray-600">
-            Monitor environmental impact, track compliance metrics, and generate detailed reports for stakeholders.
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-
-  const StatsSection = () => (
-    <section className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-8 border border-emerald-200/60">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Environmental Impact</h2>
-        <p className="text-lg text-gray-600">
-          See the real difference your e-waste management makes
-        </p>
-      </div>
-      
-      <div className="grid md:grid-cols-4 gap-6">
-        <div className="text-center">
-          <div className="text-3xl font-bold text-emerald-600 mb-2">♻️</div>
-          <div className="text-2xl font-bold text-gray-900">12,483</div>
-          <div className="text-sm text-gray-600">Devices Recycled</div>
-        </div>
-        <div className="text-center">
-          <div className="text-3xl font-bold text-emerald-600 mb-2">🌱</div>
-          <div className="text-2xl font-bold text-gray-900">28.7t</div>
-          <div className="text-sm text-gray-600">CO₂ Saved</div>
-        </div>
-        <div className="text-center">
-          <div className="text-3xl font-bold text-emerald-600 mb-2">💧</div>
-          <div className="text-2xl font-bold text-gray-900">156L</div>
-          <div className="text-sm text-gray-600">Water Saved</div>
-        </div>
-        <div className="text-center">
-          <div className="text-3xl font-bold text-emerald-600 mb-2">⚡</div>
-          <div className="text-2xl font-bold text-gray-900">89.2kWh</div>
-          <div className="text-sm text-gray-600">Energy Saved</div>
-        </div>
-      </div>
-    </section>
-  );
-
   return (
-    <div className="space-y-8">
-      <HeroSection />
-      <FeaturesSection />
-      <StatsSection />
+    <div className="relative flex min-h-screen bg-gradient-to-b from-emerald-50 via-white to-emerald-100">
+      <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 h-[28rem] w-[28rem] rounded-full bg-emerald-300/20 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-24 -right-24 h-[28rem] w-[28rem] rounded-full bg-teal-300/20 blur-3xl" />
+      
+      {/* Main Content - No Sidebar */}
+      <div className="main-content relative z-10 flex flex-1 flex-col">
+        <Header showAuthButtons={true} />
+        <div className="flex-1 p-6">
+          <div className="mx-auto max-w-7xl space-y-6">
+            {activePage === 'dashboard' && <HeroSection />}
+            <div className="rounded-2xl border border-emerald-100/60 bg-white/70 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-white/50">
+              <main className="p-6 md:p-8">
+                {renderPage()}
+              </main>
+            </div>
+          </div>
+        </div>
+        
+        <Footer />
+      </div>
     </div>
   );
 };
