@@ -1,13 +1,28 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-//const connectDB = require('./config/db');
+const { MongoClient } = require('mongodb');
 
 // Load env vars
 dotenv.config();
 
-// Connect to database
-//connectDB();
+// MongoDB connection
+const uri = process.env.MONGO_URI;
+const client = new MongoClient(uri);
+
+async function connectDB() {
+  try {
+    await client.connect();
+    console.log("MongoDB connected!");
+    // Optional: set a global variable for db access
+    global.db = client.db("ewaste"); // your database name
+  } catch (err) {
+    console.error("MongoDB connection error:", err);
+  }
+}
+
+// Connect to the database
+connectDB();
 
 const app = express();
 
@@ -21,11 +36,13 @@ app.get('/', (req, res) => {
 });
 
 // Define routes
-/*app.use('/api/auth', require('./routes/auth'));
+/*
+app.use('/api/auth', require('./routes/auth'));
 app.use('/api/items', require('./routes/items'));
 app.use('/api/vendors', require('./routes/vendors'));
 app.use('/api/reports', require('./routes/reports'));
 */
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
