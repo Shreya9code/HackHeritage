@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
-import JsBarcode from 'jsbarcode';
+import { QRCodeSVG } from 'qrcode.react';
 
 const QRGenerator = () => {
   const [qrData, setQrData] = useState({
@@ -20,7 +20,6 @@ const QRGenerator = () => {
   const [generatedSerial, setGeneratedSerial] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const labelRef = useRef(null);
-  const barcodeRef = useRef(null);
 
   // Helpers for localStorage persistence
   const STORAGE_KEY = 'ewaste_items';
@@ -102,24 +101,7 @@ const QRGenerator = () => {
     };
   }, [generatedSerial, qrData]);
 
-  // Render barcode when we have an item
-  useEffect(() => {
-    if (generatedItem && barcodeRef.current) {
-      try {
-        JsBarcode(barcodeRef.current, generatedItem.serial, {
-          format: 'CODE128',
-          lineColor: '#000',
-          background: '#ffffff',
-          width: 2,
-          height: 64,
-          displayValue: false,
-          margin: 0
-        });
-      } catch (_e) {
-        // ignore
-      }
-    }
-  }, [generatedItem]);
+
 
   const itemTypes = [
     'Laptop',
@@ -434,48 +416,58 @@ const QRGenerator = () => {
             {generatedItem ? (
               <div className="space-y-4">
                 <div className="flex justify-center">
-                  <div
-                    ref={labelRef}
-                    className="w-[640px] h-[420px] rounded-md overflow-hidden shadow relative"
-                    style={{
-                      backgroundColor: '#ffffff',
-                      color: '#111111',
-                      border: '1px solid #111111',
-                      fontFamily: 'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto'
-                    }}
-                  >
-                    {/* Top: Pickup Address (single full-width) */}
-                    <div className="p-3">
-                      <div className="text-sm font-semibold mb-1 text-center">Pickup Address</div>
-                      <div className="text-xs whitespace-pre-wrap break-words rounded p-2" style={{ border: '1px solid #111111' }}>
-                        {generatedItem.pickupAddress || '—'}
-                      </div>
-                    </div>
-                    {/* Middle: Barcode band */}
-                    <div className="py-3 flex flex-col items-center justify-center" style={{ borderTop: '1px solid #111111', borderBottom: '1px solid #111111' }}>
-                      <svg ref={barcodeRef} className="w-[86%] h-20" />
-                      <div className="mt-1 text-xs tracking-widest">{generatedItem.serial}</div>
-                    </div>
-                    {/* Bottom: Item details and status/date */}
-                    <div className="grid grid-cols-2">
-                      <div className="p-3">
-                        <div className="text-sm font-semibold mb-1 text-center">Item Details</div>
-                        <div className="text-xs rounded p-2" style={{ border: '1px solid #111111' }}>
-                          <div>Type: {generatedItem.type || '—'}</div>
-                          <div>Weight: {generatedItem.weightValue ? `${generatedItem.weightValue} ${generatedItem.weightUnit}` : '—'}</div>
-                          <div>Classification: {generatedItem.classification}</div>
-                          <div>Est. Price: ₹{Number.isFinite(generatedItem.estimatedPrice) ? generatedItem.estimatedPrice.toFixed(2) : '0.00'}</div>
-                        </div>
-                      </div>
-                      <div className="p-3" style={{ borderLeft: '1px solid #111111' }}>
-                        <div className="text-sm font-semibold mb-1 text-center">Status & Date</div>
-                        <div className="text-xs rounded p-2" style={{ border: '1px solid #111111' }}>
-                          <div>Status: {generatedItem.status}</div>
-                          <div>Date: {generatedItem.date}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                                     <div
+                     ref={labelRef}
+                     className="w-[640px] h-[480px] rounded-md overflow-hidden shadow relative"
+                     style={{
+                       backgroundColor: '#ffffff',
+                       color: '#111111',
+                       border: '1px solid #111111',
+                       fontFamily: 'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto'
+                     }}
+                   >
+                     {/* Top: QR Code band */}
+                     <div className="py-4 flex flex-col items-center justify-center" style={{ borderBottom: '1px solid #111111' }}>
+                       <QRCodeSVG 
+                         value={generatedItem.serial}
+                         size={100}
+                         level="M"
+                         includeMargin={false}
+                         className="w-[100px] h-[100px]"
+                       />
+                       <div className="mt-2 text-xs tracking-widest">{generatedItem.serial}</div>
+                     </div>
+                     {/* Bottom: Item details and address combined */}
+                     <div className="p-4 flex-1">
+                       <div className="text-sm font-semibold mb-2 text-center">Item Details</div>
+                       <div className="text-xs rounded p-3 space-y-1" style={{ border: '1px solid #111111' }}>
+                         <div className="flex justify-between">
+                           <span>Type:</span>
+                           <span className="font-medium">{generatedItem.type || '—'}</span>
+                         </div>
+                         <div className="flex justify-between">
+                           <span>Weight:</span>
+                           <span className="font-medium">{generatedItem.weightValue ? `${generatedItem.weightValue} ${generatedItem.weightUnit}` : '—'}</span>
+                         </div>
+                         <div className="flex justify-between">
+                           <span>Classification:</span>
+                           <span className="font-medium">{generatedItem.classification}</span>
+                         </div>
+                         <div className="flex justify-between">
+                           <span>Est. Price:</span>
+                           <span className="font-medium">₹{Number.isFinite(generatedItem.estimatedPrice) ? generatedItem.estimatedPrice.toFixed(2) : '0.00'}</span>
+                         </div>
+                         <div className="flex justify-between">
+                           <span>Date:</span>
+                           <span className="font-medium">{generatedItem.date}</span>
+                         </div>
+                         <div className="flex justify-between">
+                           <span>Address:</span>
+                           <span className="font-medium text-right max-w-[60%] break-words">{generatedItem.pickupAddress || '—'}</span>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
                 </div>
                 
                 <div className="text-center space-y-3">
@@ -485,7 +477,7 @@ const QRGenerator = () => {
                   >
                     Download Label PNG
                   </button>
-                  <p className="text-xs text-gray-500">Tip: Vendor can scan this barcode to update status.</p>
+                                     <p className="text-xs text-gray-500">Tip: Vendor can scan this QR code to update status.</p>
                 </div>
               </div>
             ) : (
