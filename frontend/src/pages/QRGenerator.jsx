@@ -1,17 +1,125 @@
-import { useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import html2canvas from 'html2canvas';
+import JsBarcode from 'jsbarcode';
 
 const QRGenerator = () => {
   const [qrData, setQrData] = useState({
     itemType: '',
-    serialNumber: '',
-    location: '',
+    customItemType: '',
+    brand: '',
+    model: '',
+    age: '',
+    weightValue: '',
+    weightUnit: 'kg',
+    condition: '',
+    pickupAddress: '',
     date: new Date().toISOString().split('T')[0],
     notes: '',
-    status: 'pending'
+    picture: null,
   });
-  const [generatedQR, setGeneratedQR] = useState('');
+  const [generatedSerial, setGeneratedSerial] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const labelRef = useRef(null);
+  const barcodeRef = useRef(null);
+
+  // Helpers for localStorage persistence
+  const STORAGE_KEY = 'ewaste_items';
+  const readItems = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (_e) {
+      return [];
+    }
+  };
+  const writeItems = (items) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  };
+  const upsertItem = (item) => {
+    const items = readItems();
+    const idx = items.findIndex((i) => i.serial === item.serial);
+    if (idx >= 0) {
+      items[idx] = item;
+    } else {
+      items.unshift(item);
+    }
+    writeItems(items);
+  };
+
+  const generatedItem = useMemo(() => {
+    if (!generatedSerial) return null;
+    const { itemType, customItemType, weightValue, weightUnit, condition, pickupAddress, date } = qrData;
+
+    const normalizedType = (itemType === 'Other' ? customItemType : itemType) || '';
+    const numericWeightValue = Number.parseFloat(weightValue || '0') || 0;
+    const numericWeightKg = (weightUnit === 'kg') ? numericWeightValue : (numericWeightValue / 1000);
+
+    const computeClassification = () => {
+      const typeLower = normalizedType.toLowerCase();
+      const conditionLower = (condition || '').toLowerCase();
+      const hazardousTypes = ['battery', 'ups', 'crt', 'tube', 'bulb', 'toner', 'ink'];
+      if (hazardousTypes.some(t => typeLower.includes(t)) || conditionLower.includes('leak')) {
+        return 'hazardous';
+      }
+      const reusableTypes = ['laptop','desktop','monitor','mobile','phone','tablet'];
+      if (reusableTypes.some(t => typeLower.includes(t)) && (conditionLower.includes('working') || conditionLower.includes('good'))) {
+        if (numericWeightKg <= 25) return 'reusable';
+      }
+      return 'recyclable';
+    };
+
+    const computeEstimatedPrice = () => {
+      const typeLower = normalizedType.toLowerCase();
+      const conditionLower = (condition || '').toLowerCase();
+      // Base price per kg (in INR) by rough category
+      let basePerKg = 15; // default miscellaneous e-waste
+      if (/(laptop|desktop|computer|monitor|tablet|mobile|phone)/.test(typeLower)) basePerKg = 60;
+      if (/(printer|scanner|tv|television)/.test(typeLower)) basePerKg = 35;
+      if (/(battery|ups|crt|tube|bulb|toner|ink)/.test(typeLower)) basePerKg = 10; // often disposal cost offsets value
+
+      // Condition multiplier
+      let conditionMultiplier = 0.6; // fair/unknown
+      if (/(working|good|ok)/.test(conditionLower)) conditionMultiplier = 1.0;
+      if (/(damaged|broken|dead|faulty)/.test(conditionLower)) conditionMultiplier = 0.4;
+      if (/(leak|hazard)/.test(conditionLower)) conditionMultiplier = 0.2;
+
+      const price = Math.max(0, basePerKg * numericWeightKg * conditionMultiplier);
+      return Math.round(price * 100) / 100; // 2 decimals
+    };
+
+    return {
+      serial: generatedSerial,
+      type: normalizedType,
+      weightValue,
+      weightUnit,
+      condition,
+      pickupAddress,
+      date,
+      classification: computeClassification(),
+      estimatedPrice: computeEstimatedPrice(),
+      status: 'waiting for pickup',
+      createdAt: new Date().toISOString()
+    };
+  }, [generatedSerial, qrData]);
+
+  // Render barcode when we have an item
+  useEffect(() => {
+    if (generatedItem && barcodeRef.current) {
+      try {
+        JsBarcode(barcodeRef.current, generatedItem.serial, {
+          format: 'CODE128',
+          lineColor: '#000',
+          background: '#ffffff',
+          width: 2,
+          height: 64,
+          displayValue: false,
+          margin: 0
+        });
+      } catch (_e) {
+        // ignore
+      }
+    }
+  }, [generatedItem]);
 
   const itemTypes = [
     'Laptop',
@@ -27,84 +135,129 @@ const QRGenerator = () => {
     'Other'
   ];
 
-  const statusOptions = [
-    'pending',
-    'in-transit',
-    'received',
-    'processing',
-    'recycled',
-    'disposed'
-  ];
-
-  const generateQRCode = () => {
-    if (!qrData.itemType || !qrData.serialNumber) {
-      alert('Please fill in at least Item Type and Serial Number');
+  const generateLabel = () => {
+    if (!qrData.itemType) {
+      alert('Please select an Item Type');
+      return;
+    }
+    if (qrData.itemType === 'Other' && !qrData.customItemType) {
+      alert('Please specify the Item Type');
       return;
     }
 
     setIsGenerating(true);
     
-    // Create a structured data object for the QR code
-    const qrContent = {
-      type: 'e-waste',
-      itemType: qrData.itemType,
-      serialNumber: qrData.serialNumber,
-      location: qrData.location,
-      date: qrData.date,
-      notes: qrData.notes,
-      status: qrData.status,
-      timestamp: new Date().toISOString()
-    };
+    // Generate a serial number
+    const ts = Date.now().toString(36).toUpperCase();
+    const rand = Math.floor(Math.random() * 46655).toString(36).toUpperCase();
+    const serial = `EW-${ts}-${rand}`;
+    setGeneratedSerial(serial);
 
-    // Convert to JSON string for QR code
-    const qrString = JSON.stringify(qrContent);
-    setGeneratedQR(qrString);
-    
-    setTimeout(() => setIsGenerating(false), 500);
+    // Persist item with initial status
+    const normalizedType = qrData.itemType === 'Other' ? qrData.customItemType : qrData.itemType;
+    const conditionLower = (qrData.condition || '').toLowerCase();
+    const numericWeightValue = Number.parseFloat(qrData.weightValue || '0') || 0;
+    const numericWeightKg = (qrData.weightUnit === 'kg') ? numericWeightValue : (numericWeightValue / 1000);
+    const hazardousTypes = ['battery', 'ups', 'crt', 'tube', 'bulb', 'toner', 'ink'];
+    const reusableTypes = ['laptop','desktop','monitor','mobile','phone','tablet'];
+    const classification = hazardousTypes.some(t => (normalizedType || '').toLowerCase().includes(t)) || conditionLower.includes('leak')
+      ? 'hazardous'
+      : (reusableTypes.some(t => (normalizedType || '').toLowerCase().includes(t)) && (conditionLower.includes('working') || conditionLower.includes('good')) && numericWeightKg <= 25)
+        ? 'reusable'
+        : 'recyclable';
+
+    const newItem = {
+      serial,
+      type: normalizedType,
+      weightValue: qrData.weightValue,
+      weightUnit: qrData.weightUnit,
+      condition: qrData.condition,
+      pickupAddress: qrData.pickupAddress,
+      date: qrData.date,
+      classification,
+      estimatedPrice: (() => {
+        const typeLower = (normalizedType || '').toLowerCase();
+        const condLower = (qrData.condition || '').toLowerCase();
+        let basePerKg = 15;
+        if (/(laptop|desktop|computer|monitor|tablet|mobile|phone)/.test(typeLower)) basePerKg = 60;
+        if (/(printer|scanner|tv|television)/.test(typeLower)) basePerKg = 35;
+        if (/(battery|ups|crt|tube|bulb|toner|ink)/.test(typeLower)) basePerKg = 10;
+        let m = 0.6;
+        if (/(working|good|ok)/.test(condLower)) m = 1.0;
+        if (/(damaged|broken|dead|faulty)/.test(condLower)) m = 0.4;
+        if (/(leak|hazard)/.test(condLower)) m = 0.2;
+        const kg = (qrData.weightUnit === 'kg') ? (Number.parseFloat(qrData.weightValue || '0') || 0) : ((Number.parseFloat(qrData.weightValue || '0') || 0) / 1000);
+        const price = Math.max(0, basePerKg * kg * m);
+        return Math.round(price * 100) / 100;
+      })(),
+      status: 'waiting for pickup',
+      createdAt: new Date().toISOString()
+    };
+    upsertItem(newItem);
+
+    setTimeout(() => setIsGenerating(false), 300);
   };
 
-  const downloadQR = () => {
-    if (!generatedQR) return;
-    
-    const canvas = document.createElement('canvas');
-    const svg = document.querySelector('#qr-code svg');
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const img = new Image();
-    
-    img.onload = () => {
-      canvas.width = 400;
-      canvas.height = 400;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, 400, 400);
-      ctx.drawImage(img, 0, 0, 400, 400);
-      
-      const link = document.createElement('a');
-      link.download = `qr-${qrData.itemType}-${qrData.serialNumber}.png`;
-      link.href = canvas.toDataURL();
-      link.click();
-    };
-    
-    img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+  const downloadLabel = async () => {
+    try {
+      if (!generatedSerial) {
+        alert('Please generate a label first.');
+        return;
+      }
+      if (!labelRef.current) {
+        alert('Label not found on screen.');
+        return;
+      }
+      const canvas = await html2canvas(labelRef.current, { backgroundColor: '#ffffff', scale: 2, useCORS: true });
+      if (canvas.toBlob) {
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `label-${generatedSerial}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }, 'image/png');
+      } else {
+        const link = document.createElement('a');
+        link.download = `label-${generatedSerial}.png`;
+        link.href = canvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (err) {
+      console.error('Download failed', err);
+      alert('Failed to download label. Please try again.');
+    }
   };
 
   const resetForm = () => {
     setQrData({
       itemType: '',
-      serialNumber: '',
-      location: '',
+      customItemType: '',
+      brand: '',
+      model: '',
+      age: '',
+      weightValue: '',
+      weightUnit: 'kg',
+      condition: '',
+      pickupAddress: '',
       date: new Date().toISOString().split('T')[0],
       notes: '',
-      status: 'pending'
+      picture: null,
     });
-    setGeneratedQR('');
+    setGeneratedSerial('');
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-emerald-200 pb-4">
-        <h1 className="text-3xl font-bold text-gray-900">QR Code Generator</h1>
+        <h1 className="text-3xl font-bold text-gray-900">E-waste Label Generator</h1>
         <p className="mt-2 text-gray-600">
           Generate QR codes for e-waste items to track their lifecycle and management process.
         </p>
@@ -119,91 +272,137 @@ const QRGenerator = () => {
             <div className="space-y-4">
               {/* Item Type */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Item Type *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Item Type *</label>
                 <select
                   value={qrData.itemType}
-                  onChange={(e) => setQrData({...qrData, itemType: e.target.value})}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  onChange={(e) => setQrData({ ...qrData, itemType: e.target.value })}
+                  className="w-full rounded-lg border px-3 py-2"
                 >
                   <option value="">Select item type</option>
                   {itemTypes.map((type) => (
                     <option key={type} value={type}>{type}</option>
                   ))}
                 </select>
+
+                {qrData.itemType === 'Other' && (
+                  <input
+                    type="text"
+                    placeholder="Please specify item type"
+                    value={qrData.customItemType}
+                    onChange={(e) => setQrData({ ...qrData, customItemType: e.target.value })}
+                    className="mt-2 w-full rounded-lg border px-3 py-2"
+                  />
+                )}
               </div>
 
-              {/* Serial Number */}
+              {/* Brand */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Serial Number *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Brand (optional)</label>
                 <input
                   type="text"
-                  value={qrData.serialNumber}
-                  onChange={(e) => setQrData({...qrData, serialNumber: e.target.value})}
-                  placeholder="Enter serial number"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  value={qrData.brand}
+                  onChange={(e) => setQrData({ ...qrData, brand: e.target.value })}
+                  className="w-full rounded-lg border px-3 py-2"
                 />
               </div>
 
-              {/* Location */}
+              {/* Model */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Location
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Model (optional)</label>
                 <input
                   type="text"
-                  value={qrData.location}
-                  onChange={(e) => setQrData({...qrData, location: e.target.value})}
-                  placeholder="Enter location (e.g., Building A, Floor 2)"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  value={qrData.model}
+                  onChange={(e) => setQrData({ ...qrData, model: e.target.value })}
+                  className="w-full rounded-lg border px-3 py-2"
+                />
+              </div>
+
+              {/* Age */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Age (optional)</label>
+                <input
+                  type="text"
+                  value={qrData.age}
+                  onChange={(e) => setQrData({ ...qrData, age: e.target.value })}
+                  className="w-full rounded-lg border px-3 py-2"
+                />
+              </div>
+
+              {/* Weight */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Weight</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={qrData.weightValue}
+                    onChange={(e) => setQrData({ ...qrData, weightValue: e.target.value })}
+                    className="flex-1 rounded-lg border px-3 py-2"
+                  />
+                  <select
+                    value={qrData.weightUnit}
+                    onChange={(e) => setQrData({ ...qrData, weightUnit: e.target.value })}
+                    className="w-28 rounded-lg border px-3 py-2"
+                  >
+                    <option value="kg">kg</option>
+                    <option value="g">gram</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Condition */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Condition</label>
+                <input
+                  type="text"
+                  value={qrData.condition}
+                  onChange={(e) => setQrData({ ...qrData, condition: e.target.value })}
+                  placeholder="e.g., Working, Damaged"
+                  className="w-full rounded-lg border px-3 py-2"
+                />
+              </div>
+
+              {/* Pickup Address */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Pickup Address</label>
+                <input
+                  type="text"
+                  value={qrData.pickupAddress}
+                  onChange={(e) => setQrData({ ...qrData, pickupAddress: e.target.value })}
+                  className="w-full rounded-lg border px-3 py-2"
                 />
               </div>
 
               {/* Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
                 <input
                   type="date"
                   value={qrData.date}
-                  onChange={(e) => setQrData({...qrData, date: e.target.value})}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  onChange={(e) => setQrData({ ...qrData, date: e.target.value })}
+                  className="w-full rounded-lg border px-3 py-2"
                 />
               </div>
 
-              {/* Status */}
+              {/* Picture */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Status
-                </label>
-                <select
-                  value={qrData.status}
-                  onChange={(e) => setQrData({...qrData, status: e.target.value})}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                >
-                  {statusOptions.map((status) => (
-                    <option key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Upload Picture</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setQrData({ ...qrData, picture: e.target.files[0] })}
+                />
               </div>
 
               {/* Notes */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notes
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Short Note (optional)</label>
                 <textarea
                   value={qrData.notes}
-                  onChange={(e) => setQrData({...qrData, notes: e.target.value})}
-                  placeholder="Additional notes about the item..."
+                  onChange={(e) => setQrData({ ...qrData, notes: e.target.value })}
+                  className="w-full rounded-lg border px-3 py-2"
                   rows={3}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
             </div>
@@ -211,15 +410,15 @@ const QRGenerator = () => {
             {/* Action Buttons */}
             <div className="flex gap-3 pt-4">
               <button
-                onClick={generateQRCode}
-                disabled={isGenerating || !qrData.itemType || !qrData.serialNumber}
-                className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={generateLabel}
+                disabled={isGenerating || !qrData.itemType || (qrData.itemType === 'Other' && !qrData.customItemType)}
+                className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white"
               >
-                {isGenerating ? 'Generating...' : 'Generate QR Code'}
+                {isGenerating ? 'Generating...' : 'Generate Label'}
               </button>
               <button
                 onClick={resetForm}
-                className="px-4 py-2 rounded-lg border border-gray-300 bg-white font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                className="px-4 py-2 rounded-lg border border-gray-300 bg-white font-medium text-gray-700"
               >
                 Reset
               </button>
@@ -227,87 +426,74 @@ const QRGenerator = () => {
           </div>
         </div>
 
-        {/* QR Code Display Section */}
+        {/* Label Display Section */}
         <div className="space-y-6">
           <div className="rounded-xl border border-emerald-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Generated QR Code</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Generated Label</h2>
             
-            {generatedQR ? (
+            {generatedItem ? (
               <div className="space-y-4">
-                <div id="qr-code" className="flex justify-center">
-                  <QRCodeSVG
-                    value={generatedQR}
-                    size={200}
-                    level="M"
-                    includeMargin={true}
-                    className="border-4 border-white shadow-lg"
-                  />
+                <div className="flex justify-center">
+                  <div
+                    ref={labelRef}
+                    className="w-[640px] h-[420px] rounded-md overflow-hidden shadow relative"
+                    style={{
+                      backgroundColor: '#ffffff',
+                      color: '#111111',
+                      border: '1px solid #111111',
+                      fontFamily: 'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto'
+                    }}
+                  >
+                    {/* Top: Pickup Address (single full-width) */}
+                    <div className="p-3">
+                      <div className="text-sm font-semibold mb-1 text-center">Pickup Address</div>
+                      <div className="text-xs whitespace-pre-wrap break-words rounded p-2" style={{ border: '1px solid #111111' }}>
+                        {generatedItem.pickupAddress || '—'}
+                      </div>
+                    </div>
+                    {/* Middle: Barcode band */}
+                    <div className="py-3 flex flex-col items-center justify-center" style={{ borderTop: '1px solid #111111', borderBottom: '1px solid #111111' }}>
+                      <svg ref={barcodeRef} className="w-[86%] h-20" />
+                      <div className="mt-1 text-xs tracking-widest">{generatedItem.serial}</div>
+                    </div>
+                    {/* Bottom: Item details and status/date */}
+                    <div className="grid grid-cols-2">
+                      <div className="p-3">
+                        <div className="text-sm font-semibold mb-1 text-center">Item Details</div>
+                        <div className="text-xs rounded p-2" style={{ border: '1px solid #111111' }}>
+                          <div>Type: {generatedItem.type || '—'}</div>
+                          <div>Weight: {generatedItem.weightValue ? `${generatedItem.weightValue} ${generatedItem.weightUnit}` : '—'}</div>
+                          <div>Classification: {generatedItem.classification}</div>
+                          <div>Est. Price: ₹{Number.isFinite(generatedItem.estimatedPrice) ? generatedItem.estimatedPrice.toFixed(2) : '0.00'}</div>
+                        </div>
+                      </div>
+                      <div className="p-3" style={{ borderLeft: '1px solid #111111' }}>
+                        <div className="text-sm font-semibold mb-1 text-center">Status & Date</div>
+                        <div className="text-xs rounded p-2" style={{ border: '1px solid #111111' }}>
+                          <div>Status: {generatedItem.status}</div>
+                          <div>Date: {generatedItem.date}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="text-center space-y-3">
                   <button
-                    onClick={downloadQR}
-                    className="w-full rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                    onClick={downloadLabel}
+                    className="w-full rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white"
                   >
-                    Download QR Code
+                    Download Label PNG
                   </button>
-                  
-                  <div className="text-xs text-gray-500">
-                    <p>Scan this QR code to view item details</p>
-                    <p className="mt-1">Contains: {generatedQR.length} characters</p>
-                  </div>
+                  <p className="text-xs text-gray-500">Tip: Vendor can scan this barcode to update status.</p>
                 </div>
               </div>
             ) : (
               <div className="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
-                <div className="text-center">
-                  <div className="mx-auto h-12 w-12 text-gray-400">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V6a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1zm12 0h2a1 1 0 001-1V6a1 1 0 00-1-1h-2a1 1 0 00-1 1v1a1 1 0 001 1zM5 20h2a1 1 0 001-1v-1a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1z" />
-                    </svg>
-                  </div>
-                  <p className="mt-2 text-sm text-gray-600">Fill the form and generate a QR code</p>
-                </div>
+                <p className="text-gray-600">Fill the form and generate a label</p>
               </div>
             )}
           </div>
-
-          {/* QR Code Information */}
-          {generatedQR && (
-            <div className="rounded-xl border border-emerald-200 bg-white p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">QR Code Data</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">Item Type:</span>
-                  <span className="text-gray-900">{qrData.itemType}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">Serial Number:</span>
-                  <span className="text-gray-900">{qrData.serialNumber}</span>
-                </div>
-                {qrData.location && (
-                  <div className="flex justify-between">
-                    <span className="font-medium text-gray-600">Location:</span>
-                    <span className="text-gray-900">{qrData.location}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">Date:</span>
-                  <span className="text-gray-900">{new Date(qrData.date).toLocaleDateString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">Status:</span>
-                  <span className="text-gray-900 capitalize">{qrData.status.replace('-', ' ')}</span>
-                </div>
-                {qrData.notes && (
-                  <div className="flex justify-between">
-                    <span className="font-medium text-gray-600">Notes:</span>
-                    <span className="text-gray-900">{qrData.notes}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

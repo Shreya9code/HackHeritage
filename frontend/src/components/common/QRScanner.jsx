@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import Quagga from '@ericblade/quagga2';
 import { QrScanner } from '@yudiel/react-qr-scanner';
 import { 
   X, 
@@ -20,7 +21,11 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
   const [scanResult, setScanResult] = useState(null);
   const [scanHistory, setScanHistory] = useState([]);
   const [isViewingHistory, setIsViewingHistory] = useState(false);
+  const [manualSerial, setManualSerial] = useState('');
+  const [statusUpdate, setStatusUpdate] = useState('in transit');
+  const [scanMode, setScanMode] = useState('qr');
   const fileInputRef = useRef(null);
+  const barcodeContainerRef = useRef(null);
 
   // Check camera permissions on mount
   useEffect(() => {
@@ -61,6 +66,25 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
       if (onScan) {
         onScan(result);
       }
+
+      // Try to interpret the result as a serial and update localStorage status
+      try {
+        const STORAGE_KEY = 'ewaste_items';
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const items = raw ? JSON.parse(raw) : [];
+        const idx = items.findIndex((i) => i.serial === result);
+        if (idx >= 0) {
+          // Cycle status for demo: waiting -> in transit -> processing -> done
+          const order = ['waiting for pickup', 'in transit', 'processing', 'done'];
+          const current = items[idx].status || 'waiting for pickup';
+          const next = order[(order.indexOf(current) + 1) % order.length];
+          items[idx].status = next;
+          items[idx].updatedAt = new Date().toISOString();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+        }
+      } catch (_e) {
+        // ignore
+      }
     }
   };
 
@@ -95,6 +119,43 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
     setIsViewingHistory(false);
     onClose();
   };
+
+  // Initialize/teardown Quagga when in barcode mode
+  useEffect(() => {
+    const shouldStart = isOpen && hasPermission && !isLoading && scanMode === 'barcode';
+    if (!shouldStart) return;
+
+    let active = true;
+    const start = async () => {
+      try {
+        await Quagga.init({
+          inputStream: {
+            type: 'LiveStream',
+            target: barcodeContainerRef.current,
+            constraints: { facingMode: 'environment' }
+          },
+          decoder: {
+            readers: ['code_128_reader', 'ean_reader', 'ean_8_reader']
+          },
+          locate: true
+        });
+        if (!active) return;
+        Quagga.start();
+        Quagga.onDetected((data) => {
+          const code = data?.codeResult?.code;
+          if (code) handleScan(code);
+        });
+      } catch (e) {
+        setError('Failed to start barcode scanner');
+      }
+    };
+    start();
+
+    return () => {
+      active = false;
+      try { Quagga.offDetected(); Quagga.stop(); } catch (_e) {}
+    };
+  }, [isOpen, hasPermission, isLoading, scanMode]);
 
   const renderScanner = () => {
     if (isLoading) {
@@ -136,7 +197,7 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
       return (
         <div className="flex flex-col items-center justify-center h-64 bg-green-50 rounded-lg p-6 text-center">
           <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">QR Code Scanned Successfully!</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Scanned Successfully!</h3>
           <div className="bg-white p-3 rounded-lg border border-green-200 w-full mb-4">
             <p className="text-sm font-mono break-words">{scanResult}</p>
           </div>
@@ -176,27 +237,33 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
 
     return (
       <div className="relative">
-        <QrScanner
-          onDecode={handleScan}
-          onError={handleError}
-          constraints={{ 
-            facingMode: 'environment',
-            aspectRatio: 1 
-          }}
-          containerStyle={{
-            borderRadius: '0.5rem',
-            overflow: 'hidden',
-            height: '256px'
-          }}
-          videoStyle={{
-            objectFit: 'cover'
-          }}
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="border-2 border-blue-400 rounded-lg w-48 h-48 flex items-center justify-center">
-            <Scan className="w-12 h-12 text-blue-400 animate-pulse" />
-          </div>
-        </div>
+        {scanMode === 'qr' ? (
+          <>
+            <QrScanner
+              onDecode={handleScan}
+              onError={handleError}
+              constraints={{ 
+                facingMode: 'environment',
+                aspectRatio: 1 
+              }}
+              containerStyle={{
+                borderRadius: '0.5rem',
+                overflow: 'hidden',
+                height: '256px'
+              }}
+              videoStyle={{
+                objectFit: 'cover'
+              }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="border-2 border-blue-400 rounded-lg w-48 h-48 flex items-center justify-center">
+                <Scan className="w-12 h-12 text-blue-400 animate-pulse" />
+              </div>
+            </div>
+          </>
+        ) : (
+          <div ref={barcodeContainerRef} className="rounded-lg overflow-hidden h-64 bg-black/5" />
+        )}
       </div>
     );
   };
@@ -258,19 +325,35 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
               </div>
             ) : (
               <>
+                {/* Mode toggle */}
+                <div className="mb-3 flex items-center gap-2">
+                  <button
+                    onClick={() => setScanMode('qr')}
+                    className={`px-3 py-1.5 rounded-lg text-sm border ${scanMode === 'qr' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                  >
+                    QR Mode
+                  </button>
+                  <button
+                    onClick={() => setScanMode('barcode')}
+                    className={`px-3 py-1.5 rounded-lg text-sm border ${scanMode === 'barcode' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                  >
+                    Barcode Mode
+                  </button>
+                </div>
+
                 {renderScanner()}
                 
                 {/* Instructions */}
                 <div className="mt-4 text-center">
                   <p className="text-sm text-gray-600 mb-2">
-                    Point your camera at a QR code to scan it automatically
+                    Point your camera at a {scanMode === 'qr' ? 'QR code' : 'barcode'} to scan it automatically
                   </p>
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     className="flex items-center justify-center w-full px-4 py-2 text-blue-600 hover:text-blue-800 text-sm"
                   >
                     <Upload className="w-4 h-4 mr-2" />
-                    Or upload an image of QR code
+                    Or upload an image
                   </button>
                   <input
                     type="file"
@@ -279,6 +362,51 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
                     accept="image/*"
                     className="hidden"
                   />
+                </div>
+
+                {/* Manual serial entry for barcode simulation */}
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Enter Serial to Update Status</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={manualSerial}
+                      onChange={(e) => setManualSerial(e.target.value)}
+                      placeholder="e.g., EW-..."
+                      className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                    />
+                    <select
+                      value={statusUpdate}
+                      onChange={(e) => setStatusUpdate(e.target.value)}
+                      className="rounded-lg border px-3 py-2 text-sm"
+                    >
+                      {['waiting for pickup','in transit','processing','done'].map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => {
+                        if (!manualSerial) return;
+                        try {
+                          const STORAGE_KEY = 'ewaste_items';
+                          const raw = localStorage.getItem(STORAGE_KEY);
+                          const items = raw ? JSON.parse(raw) : [];
+                          const idx = items.findIndex((i) => i.serial === manualSerial);
+                          if (idx >= 0) {
+                            items[idx].status = statusUpdate;
+                            items[idx].updatedAt = new Date().toISOString();
+                            localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+                            handleScan(manualSerial);
+                          } else {
+                            alert('Serial not found');
+                          }
+                        } catch (_e) {}
+                      }}
+                      className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm"
+                    >
+                      Update
+                    </button>
+                  </div>
                 </div>
 
                 {/* Demo QR Codes for Testing */}
