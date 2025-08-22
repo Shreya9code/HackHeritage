@@ -20,7 +20,7 @@ const Header = () => {
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
           >
             <i className="fas fa-bell"></i>
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">3</span>
+            <span className="absolute -top-1 -right-1 !bg-red-500 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">3</span>
           </button>
           
           {isNotificationsOpen && (
@@ -29,15 +29,15 @@ const Header = () => {
                 <h3 className="text-sm font-medium">Notifications</h3>
               </div>
               <div className="max-h-60 overflow-y-auto">
-                <div className="px-4 py-3 hover:bg-gray-50">
+                <div className="px-4 py-3 hover:!bg-gray-50">
                   <p className="text-sm">New e-waste pickup scheduled for tomorrow</p>
                   <p className="text-xs text-gray-500 mt-1">2 hours ago</p>
                 </div>
-                <div className="px-4 py-3 hover:bg-gray-50">
+                <div className="px-4 py-3 hover:!bg-gray-50">
                   <p className="text-sm">Your recycling report for July is ready</p>
                   <p className="text-xs text-gray-500 mt-1">1 day ago</p>
                 </div>
-                <div className="px-4 py-3 hover:bg-gray-50">
+                <div className="px-4 py-3 hover:!bg-gray-50">
                   <p className="text-sm">New campaign launched: E-Waste Awareness Week</p>
                   <p className="text-xs text-gray-500 mt-1">2 days ago</p>
                 </div>
@@ -60,7 +60,7 @@ const Header = () => {
             className="flex items-center space-x-2 focus:outline-none"
             onClick={() => setIsProfileOpen(!isProfileOpen)}
           >
-            <div className="w-8 h-8 rounded-full bg-green-200 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full !bg-green-200 flex items-center justify-center">
               <i className="fas fa-user text-green-600"></i>
             </div>
             <span className="text-sm hidden md:block">Guest User</span>
@@ -72,10 +72,10 @@ const Header = () => {
                 <p className="text-sm font-medium">Guest User</p>
                 <p className="text-xs text-gray-500">Not logged in</p>
               </div>
-              <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center">
+              <button className="w-full text-left px-4 py-2 text-sm hover:!bg-gray-50 flex items-center">
                 <i className="fas fa-sign-in-alt mr-2 text-gray-500"></i> Login
               </button>
-              <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center">
+              <button className="w-full text-left px-4 py-2 text-sm hover:!bg-gray-50 flex items-center">
                 <i className="fas fa-cog mr-2 text-gray-500"></i> Settings
               </button>
             </div>
