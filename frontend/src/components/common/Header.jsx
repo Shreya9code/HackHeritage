@@ -1,9 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useUser, SignOutButton } from '@clerk/clerk-react';
 
 const Header = ({ onMenuToggle, showAuthButtons = false }) => {
+  const { user, isLoaded } = useUser();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [userRole, setUserRole] = useState('');
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    if (isLoaded && user) {
+      setUserName(user.fullName || user.primaryEmailAddress?.emailAddress || 'User');
+      const role = localStorage.getItem('userRole');
+      setUserRole(role || '');
+    }
+  }, [isLoaded, user]);
 
   return (
     <header className="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
@@ -13,15 +25,15 @@ const Header = ({ onMenuToggle, showAuthButtons = false }) => {
             <i className="fas fa-bars text-xl"></i>
           </button>
         )}
-        <h2 className="text-xl font-semibold">
-          {showAuthButtons ? (
-            <span className="!bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-              E-Waste Raah
-            </span>
-          ) : (
-            'Dashboard'
-          )}
-        </h2>
+                 <h2 className="text-xl font-semibold">
+           {showAuthButtons ? (
+             <span className="!bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+               E-Waste Raah
+             </span>
+           ) : (
+             userRole ? `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} Dashboard` : 'Dashboard'
+           )}
+         </h2>
       </div>
       
       <div className="flex items-center space-x-4">
@@ -93,24 +105,27 @@ const Header = ({ onMenuToggle, showAuthButtons = false }) => {
                 <div className="w-8 h-8 rounded-full !bg-green-200 flex items-center justify-center">
                   <i className="fas fa-user text-green-600"></i>
                 </div>
-                <span className="text-sm hidden md:block">Guest User</span>
+                <span className="text-sm hidden md:block">{userName}</span>
               </button>
               
               {isProfileOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-10">
-                  <div className="px-4 py-2 border-b">
-                    <p className="text-sm font-medium">Guest User</p>
-                    <p className="text-xs text-gray-500">Not logged in</p>
-                  </div>
-                  <Link to="/signin" className="w-full text-left px-4 py-2 text-sm hover:!bg-gray-50 flex items-center">
-                    <i className="fas fa-sign-in-alt mr-2 text-gray-500"></i> Login
-                  </Link>
-                  <Link to="/signup" className="w-full text-left px-4 py-2 text-sm hover:!bg-gray-50 flex items-center">
-                    <i className="fas fa-user-plus mr-2 text-gray-500"></i> Sign Up
-                  </Link>
-                  <button className="w-full text-left px-4 py-2 text-sm hover:!bg-gray-50 flex items-center">
-                    <i className="fas fa-cog mr-2 text-gray-500"></i> Settings
-                  </button>
+                                 <div className="px-4 py-2 border-b">
+                 <p className="text-sm font-medium">{userName}</p>
+                 <p className="text-xs text-gray-500">{userRole ? `${userRole.charAt(0).toUpperCase() + userRole.slice(1)}` : 'User'}</p>
+               </div>
+               {user && (
+                 <>
+                   <button className="w-full text-left px-4 py-2 text-sm hover:!bg-gray-50 flex items-center">
+                     <i className="fas fa-cog mr-2 text-gray-500"></i> Settings
+                   </button>
+                   <SignOutButton>
+                     <button className="w-full text-left px-4 py-2 text-sm hover:!bg-gray-50 flex items-center text-red-600">
+                       <i className="fas fa-sign-out-alt mr-2"></i> Sign Out
+                     </button>
+                   </SignOutButton>
+                 </>
+               )}
                 </div>
               )}
             </div>

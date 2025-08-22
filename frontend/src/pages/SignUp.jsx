@@ -7,7 +7,11 @@ function SignUpPage() {
         
         {/* Left Side - Clerk Sign Up */}
         <div className="w-1/2 flex items-center justify-center p-10">
-          <SignUp routing="path" path="/signup" />
+          <SignUp 
+            routing="hash" 
+            redirectUrl="/role-selection"
+            afterSignUpUrl="/role-selection"
+          />
         </div>
 
         {/* Right Side - Image */}

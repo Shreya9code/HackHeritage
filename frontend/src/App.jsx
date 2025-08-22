@@ -8,6 +8,7 @@ import {
   SignedIn,
   SignedOut,
   UserButton,
+  RedirectToSignIn,
 } from "@clerk/clerk-react";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
@@ -20,12 +21,29 @@ import Campaigns from "./pages/Campaigns";
 import ContactUs from "./pages/ContactUs";
 import SignInPage from "./pages/SignIn";
 import SignUpPage from "./pages/SignUp";
+import RoleSelection from "./pages/RoleSelection";
+import ProtectedRoute from "./components/common/ProtectedRoute";
+import AuthCallback from "./components/common/AuthCallback";
+import RedirectHandler from "./components/common/RedirectHandler";
+
+
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 function App() {
   return (
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+    <ClerkProvider 
+      publishableKey={PUBLISHABLE_KEY}
+      navigate={(to) => {
+        // Handle navigation after authentication
+        if (to === '/') {
+          // After signup/signin, redirect to role selection
+          window.location.href = '/role-selection';
+        } else {
+          window.location.href = to;
+        }
+      }}
+    >
       <Router>
         <Routes>
           {/* Home page - no sidebar, with header and footer */}
@@ -34,9 +52,30 @@ function App() {
           {/* Auth pages - no layout */}
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/signup" element={<SignUpPage />} />
+          
+          {/* Clerk callback routes */}
+          <Route path="/sign-in/*" element={<SignInPage />} />
+          <Route path="/sign-up/*" element={<SignUpPage />} />
+          <Route path="/sso-callback" element={<RedirectHandler />} />
+          <Route path="/signup/sso-callback" element={<RedirectHandler />} />
+          <Route path="/signin/sso-callback" element={<RedirectHandler />} />
+          <Route path="/*/sso-callback" element={<RedirectHandler />} />
+          
+          {/* Role selection page */}
+          <Route path="/role-selection" element={
+            <SignedIn>
+              <RoleSelection />
+            </SignedIn>
+          } />
 
           {/* Protected pages - with layout */}
-          <Route path="/*" element={<ProtectedLayout />} />
+          <Route path="/*" element={
+            <SignedIn>
+              <ProtectedRoute>
+                <ProtectedLayout />
+              </ProtectedRoute>
+            </SignedIn>
+          } />
         </Routes>
       </Router>
     </ClerkProvider>

@@ -7,7 +7,11 @@ function SignInPage() {
         
         {/* Left Side - Clerk Sign In */}
         <div className="w-1/2 flex items-center justify-center p-10">
-          <SignIn routing="path" path="/signin" />
+          <SignIn 
+            routing="hash" 
+            redirectUrl="/role-selection"
+            afterSignInUrl="/role-selection"
+          />
         </div>
 
         {/* Right Side - Image */}

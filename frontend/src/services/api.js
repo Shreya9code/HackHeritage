@@ -56,4 +56,30 @@ export const ewasteAPI = {
   },
 };
 
+// User management API functions
+export const userAPI = {
+  // Create or update user based on role
+  createOrUpdateUser: async (role, userData) => {
+    try {
+      const response = await api.post(`/users/${role}`, userData);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to create/update user');
+    }
+  },
+
+  // Get user by Clerk ID
+  getUserByClerkId: async (clerkId) => {
+    try {
+      const response = await api.get(`/users/clerk/${clerkId}`);
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 404) {
+        return null; // User not found
+      }
+      throw new Error(error.response?.data?.error || 'Failed to fetch user');
+    }
+  },
+};
+
 export default api;

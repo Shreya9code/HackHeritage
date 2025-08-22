@@ -20,6 +20,7 @@ app.use('/api/vendors', require('./routes/vendorRoutes'));
 app.use('/api/donors', require('./routes/donorRoutes'));
 app.use('/api/companies', require('./routes/companyRoutes'));
 app.use('/api/ewastes', require('./routes/ewasteRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
 
 app.get('/', (req, res) => {
   res.json({ message: 'E-Waste Management API' });
