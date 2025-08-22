@@ -54,6 +54,16 @@ export const ewasteAPI = {
       throw new Error(error.response?.data?.error || 'Failed to fetch e-waste items');
     }
   },
+
+  // Get e-waste items by donor ID (Clerk ID)
+  getByDonorId: async (donorId) => {
+    try {
+      const response = await api.get(`/ewastes/donor/${donorId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to fetch donor e-waste items');
+    }
+  },
 };
 
 // User management API functions

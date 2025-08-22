@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const ewasteSchema = new mongoose.Schema({
-  donorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Donor', required: true },
+  donorId: { type: String, required: true }, // Clerk ID of the donor
   serial: { type: String, required: true, unique: true }, // Unique serial number for QR codes
   itemType: { type: String, required: true },
   brand: { type: String },
@@ -16,7 +16,7 @@ const ewasteSchema = new mongoose.Schema({
   shortNote: { type: String },
   classification: { type: String, enum: ['hazardous', 'reusable', 'recyclable'], default: 'recyclable' },
   estimatedPrice: { type: Number, default: 0 },
-  status: { type: String, enum: ['waiting for pickup', 'in transit', 'processing', 'done'], default: 'waiting for pickup' },
+  status: { type: String, enum: ['reported', 'waiting for pickup', 'in transit', 'processing', 'done'], default: 'reported' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

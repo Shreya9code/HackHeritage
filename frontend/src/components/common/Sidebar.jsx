@@ -41,7 +41,6 @@ const Sidebar = () => {
       case 'donor':
         return [
           ...baseItems,
-          { path: "/schedule", label: "Schedule Pickup", icon: Calendar },
           { path: "/qr-generator", label: "Generate QR", icon: QrCode },
           { path: "/campaigns", label: "Campaigns", icon: Megaphone },
         ];
@@ -137,13 +136,6 @@ const Sidebar = () => {
                 >
                   <QrCode className="w-4 h-4 mr-2" />
                   Generate QR Code
-                </NavLink>
-                <NavLink
-                  to="/schedule"
-                  className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:bg-blue-700 transition-colors mb-2 block"
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Schedule Pickup
                 </NavLink>
               </>
             )}

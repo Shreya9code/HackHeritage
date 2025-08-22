@@ -34,16 +34,18 @@ const ItemCard = ({ item }) => {
 
   const getStatusInfo = (status) => {
     switch(status) {
-      case 'recycled':
-        return { color: 'text-green-600', bg: 'bg-green-100', icon: CheckCircle, label: 'Recycled' };
-      case 'pending':
-        return { color: 'text-yellow-600', bg: 'bg-yellow-100', icon: Clock, label: 'Pending Pickup' };
-      case 'hazardous':
-        return { color: 'text-red-600', bg: 'bg-red-100', icon: AlertTriangle, label: 'Hazardous' };
+      case 'done':
+        return { color: 'text-green-600', bg: 'bg-green-100', icon: CheckCircle, label: 'Completed' };
+      case 'waiting for pickup':
+        return { color: 'text-yellow-600', bg: 'bg-yellow-100', icon: Clock, label: 'Waiting for Pickup' };
+      case 'in transit':
+        return { color: 'text-blue-600', bg: 'bg-blue-100', icon: Clock, label: 'In Transit' };
       case 'processing':
-        return { color: 'text-blue-600', bg: 'bg-blue-100', icon: Clock, label: 'In Process' };
+        return { color: 'text-purple-600', bg: 'bg-purple-100', icon: Clock, label: 'Processing' };
+      case 'reported':
+        return { color: 'text-orange-600', bg: 'bg-orange-100', icon: Clock, label: 'Reported' };
       default:
-        return { color: 'text-gray-600', bg: 'bg-gray-100', icon: Clock, label: 'Unknown' };
+        return { color: 'text-gray-600', bg: 'bg-gray-100', icon: Clock, label: status || 'Unknown' };
     }
   };
 
@@ -99,22 +101,62 @@ const ItemCard = ({ item }) => {
       <div className="p-4">
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <p className="text-xs text-gray-500 mb-1">Category</p>
-            <p className="text-sm font-medium capitalize">{item.category.replace('-', ' ')}</p>
+            <p className="text-xs text-gray-500 mb-1">Classification</p>
+            <p className="text-sm font-medium capitalize">{item.category}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-1">Department</p>
-            <p className="text-sm font-medium">{item.department}</p>
+            <p className="text-xs text-gray-500 mb-1">Brand</p>
+            <p className="text-sm font-medium">{item.brand}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-1">Added On</p>
+            <p className="text-xs text-gray-500 mb-1">Weight</p>
+            <p className="text-sm font-medium">{item.weight}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 mb-1">Condition</p>
+            <p className="text-sm font-medium">{item.condition}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 mb-1">Submitted On</p>
             <p className="text-sm font-medium">{item.dateAdded}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-1">Quantity</p>
-            <p className="text-sm font-medium">{item.quantity} units</p>
+            <p className="text-xs text-gray-500 mb-1">Est. Price</p>
+            <p className="text-sm font-medium">₹{item.estimatedPrice || '0'}</p>
           </div>
         </div>
+
+        {/* Serial Number */}
+        {item.serial && (
+          <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+            <p className="text-xs text-gray-500 mb-1">Serial Number</p>
+            <p className="text-sm font-mono font-medium">{item.serial}</p>
+          </div>
+        )}
+
+        {/* Pickup Address */}
+        {item.pickupAddress && (
+          <div className="mb-4">
+            <p className="text-xs text-gray-500 mb-1">Pickup Address</p>
+            <p className="text-sm font-medium">{item.pickupAddress}</p>
+          </div>
+        )}
+
+                 {/* Notes */}
+         {item.shortNote && (
+           <div className="mb-4">
+             <p className="text-xs text-gray-500 mb-1">Notes</p>
+             <p className="text-sm font-medium">{item.shortNote}</p>
+           </div>
+         )}
+
+         {/* Donor ID (for vendors and companies) */}
+         {item.donorId && (
+           <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+             <p className="text-xs text-gray-500 mb-1">Donor ID</p>
+             <p className="text-sm font-mono font-medium text-blue-700">{item.donorId}</p>
+           </div>
+         )}
 
         {/* Status */}
         <div className="flex items-center justify-between mb-4">
@@ -137,12 +179,14 @@ const ItemCard = ({ item }) => {
           <div className="mt-4 p-3 bg-gray-50 rounded-lg text-center">
             <div className="w-32 h-32 mx-auto bg-white p-2 rounded">
               <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ewaste-${item.id}`} 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${item.serial || item.id}`} 
                 alt="QR Code" 
                 className="w-full h-full"
               />
             </div>
-            <p className="text-xs text-gray-500 mt-2">Scan to view item details</p>
+            <p className="text-xs text-gray-500 mt-2">
+              {item.serial ? `Serial: ${item.serial}` : 'Scan to view item details'}
+            </p>
           </div>
         )}
       </div>

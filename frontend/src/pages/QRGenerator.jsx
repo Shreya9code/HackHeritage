@@ -2,6 +2,7 @@ import {  useMemo, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { QRCodeSVG } from 'qrcode.react';
 import { ewasteAPI } from '../services/api';
+import { useUser } from '@clerk/clerk-react';
 
 const QRGenerator = () => {
   const [qrData, setQrData] = useState({
@@ -23,6 +24,7 @@ const QRGenerator = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const labelRef = useRef(null);
+  const { user } = useUser();
 
   // Helpers for localStorage persistence
   const STORAGE_KEY = 'ewaste_items';
@@ -99,7 +101,7 @@ const QRGenerator = () => {
       date,
       classification: computeClassification(),
       estimatedPrice: computeEstimatedPrice(),
-      status: 'waiting for pickup',
+      status: 'reported',
       createdAt: new Date().toISOString()
     };
   }, [generatedSerial, qrData]);
@@ -175,7 +177,7 @@ const QRGenerator = () => {
         const price = Math.max(0, basePerKg * kg * m);
         return Math.round(price * 100) / 100;
       })(),
-      status: 'waiting for pickup',
+      status: 'reported',
       createdAt: new Date().toISOString()
     };
     upsertItem(newItem);
@@ -226,17 +228,15 @@ const QRGenerator = () => {
       return;
     }
 
+    if (!user) {
+      alert('User not found. Please log in again.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // Get user ID from localStorage
-      const userId = localStorage.getItem('userId');
-      if (!userId) {
-        alert('User not found. Please log in again.');
-        return;
-      }
-      
       const ewasteData = {
-        donorId: userId,
+        donorId: user.id, // Use Clerk ID as donor ID
         serial: generatedItem.serial,
         itemType: generatedItem.type,
         brand: qrData.brand,
@@ -251,7 +251,8 @@ const QRGenerator = () => {
         shortNote: qrData.notes,
         classification: generatedItem.classification,
         estimatedPrice: generatedItem.estimatedPrice,
-        status: generatedItem.status
+        status: generatedItem.status,
+        createdAt: new Date()
       };
 
       await ewasteAPI.create(ewasteData);

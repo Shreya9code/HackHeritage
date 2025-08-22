@@ -4,17 +4,11 @@ const Donor = require('../models/Donor');
 // Donor reports e-waste
 exports.createEwaste = async (req, res) => {
   try {
-    let donorId = req.body.donorId;
+    const donorId = req.body.donorId;
     
-    // If no donorId is provided, create a placeholder donor for testing
+    // Validate that donorId (Clerk ID) is provided
     if (!donorId) {
-      const placeholderDonor = await Donor.create({
-        name: 'Anonymous Donor',
-        contactNumber: 'N/A',
-        address: req.body.pickupAddress || 'N/A',
-        email: 'anonymous@ewaste.com'
-      });
-      donorId = placeholderDonor._id;
+      return res.status(400).json({ error: 'Donor ID (Clerk ID) is required' });
     }
     
     const ewasteData = { ...req.body, donorId };
@@ -28,7 +22,7 @@ exports.createEwaste = async (req, res) => {
 // Get all e-waste for vendors
 exports.getAllEwastes = async (req, res) => {
   try {
-    const ewastes = await Ewaste.find().populate('donorId', 'name contactNumber address email');
+    const ewastes = await Ewaste.find();
     res.status(200).json(ewastes);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -38,7 +32,7 @@ exports.getAllEwastes = async (req, res) => {
 // Get single e-waste by ID (for QR code scan)
 exports.getEwasteById = async (req, res) => {
   try {
-    const ewaste = await Ewaste.findById(req.params.id).populate('donorId', 'name contactNumber address email');
+    const ewaste = await Ewaste.findById(req.params.id);
     if (!ewaste) return res.status(404).json({ message: 'E-waste not found' });
     res.status(200).json(ewaste);
   } catch (err) {
@@ -49,7 +43,7 @@ exports.getEwasteById = async (req, res) => {
 // Get single e-waste by serial number (for QR code scan)
 exports.getEwasteBySerial = async (req, res) => {
   try {
-    const ewaste = await Ewaste.findOne({ serial: req.params.serial }).populate('donorId', 'name contactNumber address email');
+    const ewaste = await Ewaste.findOne({ serial: req.params.serial });
     if (!ewaste) return res.status(404).json({ message: 'E-waste not found' });
     res.status(200).json(ewaste);
   } catch (err) {
@@ -80,6 +74,17 @@ exports.updateStatusBySerial = async (req, res) => {
     );
     if (!ewaste) return res.status(404).json({ message: 'E-waste not found' });
     res.status(200).json(ewaste);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get e-waste items by donor ID (Clerk ID)
+exports.getEwasteByDonorId = async (req, res) => {
+  try {
+    const { donorId } = req.params;
+    const ewastes = await Ewaste.find({ donorId });
+    res.status(200).json(ewastes);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
