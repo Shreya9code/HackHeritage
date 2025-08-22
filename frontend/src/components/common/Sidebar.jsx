@@ -10,18 +10,22 @@ import {
   Recycle,
   Plus,
   Scan,
-  User
+  User,
+  Home,
+  Play
 } from "lucide-react";
 
 const Sidebar = () => {
   const menuItems = [
-    { path: "/", label: "Dashboard", icon: BarChart3 },
+    { path: "/", label: "Home", icon: Home },
+    { path: "/dashboard", label: "Dashboard", icon: BarChart3 },
     { path: "/inventory", label: "Inventory", icon: Package },
     { path: "/schedule", label: "Schedule Pickup", icon: Calendar },
     { path: "/compliance", label: "Compliance", icon: FileText },
     { path: "/qr-generator", label: "QR Generator", icon: QrCode },
     { path: "/analytics", label: "Analytics", icon: TrendingUp },
     { path: "/campaigns", label: "Campaigns", icon: Megaphone },
+    { path: "/demo", label: "Demo", icon: Play },
   ];
 
   return (
@@ -46,7 +50,7 @@ const Sidebar = () => {
               <li key={item.path}>
                 <NavLink
                   to={item.path}
-                  end
+                  end={item.path === "/"}
                   className={({ isActive }) =>
                     `p-3 rounded-lg flex items-center transition-colors ${
                       isActive
@@ -66,14 +70,20 @@ const Sidebar = () => {
         {/* Quick Actions */}
         <div className="mt-8 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
           <h3 className="font-semibold text-emerald-700 mb-3">Quick Actions</h3>
-          <button className="w-full bg-emerald-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:bg-emerald-700 transition-colors mb-2">
+          <NavLink
+            to="/qr-generator"
+            className="w-full bg-emerald-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:bg-emerald-700 transition-colors mb-2 block"
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add New Item
-          </button>
-          <button className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:bg-blue-700 transition-colors">
+          </NavLink>
+          <NavLink
+            to="/demo"
+            className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:bg-blue-700 transition-colors block"
+          >
             <Scan className="w-4 h-4 mr-2" />
             Scan QR Code
-          </button>
+          </NavLink>
         </div>
       </div>
 

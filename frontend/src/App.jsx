@@ -19,6 +19,7 @@ import QRGenerator from "./pages/QRGenerator";
 import Analytics from "./pages/Analytics";
 import Campaigns from "./pages/Campaigns";
 import ContactUs from "./pages/ContactUs";
+import Home from "./pages/Home"; // 👈 Add this import
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -38,7 +39,9 @@ function App() {
                 <div className="rounded-2xl border border-emerald-100/60 !bg-white/70 shadow-lg backdrop-blur">
                   <main className="p-6 md:p-8">
                     <Routes>
-                      <Route path="/" element={<Dashboard />} />
+                      <Route path="/" element={<Home />} /> {/* 👈 Use Home as landing */}
+                      <Route path="/home" element={<Home />} /> {/* 👈 Add this route */}
+                      <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/inventory" element={<Inventory />} />
                       <Route path="/schedule" element={<Schedule />} />
                       <Route path="/compliance" element={<Compliance />} />
@@ -48,7 +51,6 @@ function App() {
                       <Route path="/signin" element={<LoginPage />} />
                       <Route path="/signup" element={<RegisterPage />} />
                       <Route path="/contact" element={<ContactUs />} />
-
                     </Routes>
                   </main>
                 </div>
@@ -78,7 +80,7 @@ function LoginPage() {
         {/* Right Side - Image */}
         <div className="w-1/2 hidden md:flex items-center justify-center bg-emerald-50">
           <img
-            src="/login-illustration.jpg" // 👉 replace with your image path
+            src="/login-illustration.jpg"
             alt="Login Illustration"
             className="h-full w-full object-cover"
           />
@@ -101,7 +103,7 @@ function RegisterPage() {
         {/* Right Side - Image */}
         <div className="w-1/2 hidden md:flex items-center justify-center bg-emerald-50">
           <img
-            src="/login-illustration.jpg" // 👉 replace with your image path
+            src="/login-illustration.jpg"
             alt="Register Illustration"
             className="h-full w-full object-cover"
           />
