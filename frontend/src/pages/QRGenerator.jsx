@@ -125,9 +125,9 @@ const QRGenerator = () => {
       const conditionLower = (condition || '').toLowerCase();
       // Base price per kg (in INR) by rough category
       let basePerKg = 15; // default miscellaneous e-waste
-      if (/(laptop|desktop|computer|monitor|tablet|mobile|phone)/.test(typeLower)) basePerKg = 60;
-      if (/(printer|scanner|tv|television)/.test(typeLower)) basePerKg = 35;
-      if (/(battery|ups|crt|tube|bulb|toner|ink)/.test(typeLower)) basePerKg = 10; // often disposal cost offsets value
+      if (/(laptop|desktop|computer|monitor|tablet|mobile|phone)/.test(typeLower)) basePerKg = 300;
+      if (/(printer|scanner|tv|television)/.test(typeLower)) basePerKg = 150;
+      if (/(battery|ups|crt|tube|bulb|toner|ink)/.test(typeLower)) basePerKg = 80; // often disposal cost offsets value
 
       // Condition multiplier
       let conditionMultiplier = 0.6; // fair/unknown
