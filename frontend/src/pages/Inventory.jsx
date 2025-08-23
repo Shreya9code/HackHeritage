@@ -79,7 +79,9 @@ const Inventory = () => {
           // Completion fields
           completedBy: item.completedBy,
           completedAt: item.completedAt,
-          completionNotes: item.completionNotes
+          completionNotes: item.completionNotes,
+          // Gemini AI classification
+          geminiClassification: item.geminiClassification
         }));
         
         // SECURITY CHECK: For donors, ensure they only see their own items
@@ -137,7 +139,9 @@ const Inventory = () => {
         // Completion fields
         completedBy: updatedItem.completedBy,
         completedAt: updatedItem.completedAt,
-        completionNotes: updatedItem.completionNotes
+        completionNotes: updatedItem.completionNotes,
+        // Gemini AI classification
+        geminiClassification: updatedItem.geminiClassification
       } : item
     ));
   };

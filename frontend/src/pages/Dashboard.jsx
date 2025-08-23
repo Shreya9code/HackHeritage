@@ -18,7 +18,7 @@ function CompanyDashboard() {
     { id: 3, name: 'Sustainable Waste', pickups: 156, rating: 4.9, revenue: '$5,890' },
   ]);
 
-  const [pendingPickups] = useState([
+  /*const [pendingPickups] = useState([
     { id: 1, item: 'Laptop', donor: 'John Doe', location: 'IT Department', priority: 'High', time: '2 hours ago' },
     { id: 2, item: 'Monitor', donor: 'Jane Smith', location: 'Science Block', priority: 'Medium', time: '4 hours ago' },
     { id: 3, item: 'Printer', donor: 'Mike Johnson', location: 'Admin Office', priority: 'Low', time: '6 hours ago' },
@@ -28,7 +28,7 @@ function CompanyDashboard() {
     { id: 1, item: 'Desktop Computer', weight: '5.2 kg', status: 'Disassembly', progress: 75 },
     { id: 2, item: 'Mobile Phones', weight: '0.8 kg', status: 'Testing', progress: 45 },
     { id: 3, item: 'Batteries', weight: '2.1 kg', status: 'Recycling', progress: 90 },
-  ]);
+  ]);*/
 
   const recentActivity = [
     { id: 1, type: 'Item', user: 'vendor', action: 'Accepted e-waste item #EW001', time: '5 minutes ago' },

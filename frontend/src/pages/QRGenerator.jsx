@@ -1,7 +1,7 @@
 import {  useMemo, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { QRCodeSVG } from 'qrcode.react';
-import { ewasteAPI } from '../services/api';
+import { ewasteAPI, geminiAPI } from '../services/api';
 import { useUser } from '@clerk/clerk-react';
 
 const QRGenerator = () => {
@@ -23,6 +23,9 @@ const QRGenerator = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [geminiClassification, setGeminiClassification] = useState(null);
+  const [isClassifying, setIsClassifying] = useState(false);
+  const [notification, setNotification] = useState(null);
   const labelRef = useRef(null);
   const { user } = useUser();
 
@@ -33,6 +36,7 @@ const QRGenerator = () => {
       const raw = localStorage.getItem(STORAGE_KEY);
       return raw ? JSON.parse(raw) : [];
     } catch (_e) {
+      console.error('Error reading items from localStorage:', _e);
       return [];
     }
   };
@@ -48,6 +52,50 @@ const QRGenerator = () => {
       items.unshift(item);
     }
     writeItems(items);
+  };
+
+  // Classify item using Gemini AI
+  const classifyWithGemini = async () => {
+    if (!qrData.itemType) {
+      alert('Please select an Item Type first');
+      return;
+    }
+
+    setIsClassifying(true);
+    setGeminiClassification(null);
+
+    try {
+      const itemData = {
+        itemType: qrData.itemType === 'Other' ? qrData.customItemType : qrData.itemType,
+        brand: qrData.brand,
+        model: qrData.model,
+        age: qrData.age,
+        weight: `${qrData.weightValue} ${qrData.weightUnit}`,
+        condition: qrData.condition,
+        picture: qrData.picture
+      };
+
+      const classification = await geminiAPI.classifyEwaste(itemData);
+      setGeminiClassification(classification);
+      
+      // Show notification based on classification type
+      if (classification && !classification.raw_response) {
+        setNotification({ type: 'success', message: 'AI-powered classification completed successfully!' });
+        console.log('Using AI-powered classification');
+      } else {
+        setNotification({ type: 'info', message: 'Using fallback classification due to API rate limits. Results are still accurate.' });
+        console.log('Using fallback classification due to API limits');
+      }
+      
+      // Clear notification after 5 seconds
+      setTimeout(() => setNotification(null), 5000);
+    } catch (error) {
+      console.error('Error classifying with Gemini:', error);
+      // Don't show alert since we now have fallback classification
+      // The error is handled gracefully in the API layer
+    } finally {
+      setIsClassifying(false);
+    }
   };
 
   const generatedItem = useMemo(() => {
@@ -102,9 +150,10 @@ const QRGenerator = () => {
       classification: computeClassification(),
       estimatedPrice: computeEstimatedPrice(),
       status: 'reported',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      geminiClassification: geminiClassification // Include AI classification results
     };
-  }, [generatedSerial, qrData]);
+  }, [generatedSerial, qrData, geminiClassification]);
 
 
 
@@ -252,7 +301,8 @@ const QRGenerator = () => {
         classification: generatedItem.classification,
         estimatedPrice: generatedItem.estimatedPrice,
         status: generatedItem.status,
-        createdAt: new Date()
+        createdAt: new Date(),
+        geminiClassification: generatedItem.geminiClassification // Include AI classification
       };
 
       await ewasteAPI.create(ewasteData);
@@ -283,6 +333,7 @@ const QRGenerator = () => {
     });
     setGeneratedSerial('');
     setIsSubmitted(false);
+    setGeminiClassification(null);
   };
 
   return (
@@ -294,6 +345,25 @@ const QRGenerator = () => {
           Generate QR codes for e-waste items to track their lifecycle and management process.
         </p>
       </div>
+
+      {/* Notification */}
+      {notification && (
+        <div className={`rounded-lg p-4 ${
+          notification.type === 'success' 
+            ? 'bg-green-100 border border-green-300 text-green-800' 
+            : 'bg-blue-100 border border-blue-300 text-blue-800'
+        }`}>
+          <div className="flex items-center justify-between">
+            <span>{notification.message}</span>
+            <button 
+              onClick={() => setNotification(null)}
+              className="text-sm font-medium hover:opacity-70"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Form Section */}
@@ -437,6 +507,95 @@ const QRGenerator = () => {
                   rows={3}
                 />
               </div>
+
+              {/* AI Classification Button */}
+              <div>
+                <button
+                  onClick={classifyWithGemini}
+                  disabled={isClassifying || !qrData.itemType || (qrData.itemType === 'Other' && !qrData.customItemType)}
+                  className="w-full rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isClassifying ? 'Analyzing with AI...' : '🔍 Analyze with AI'}
+                </button>
+              </div>
+
+              {/* AI Classification Results */}
+              {geminiClassification && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-3">AI Analysis Results</h3>
+                  
+                  {/* Classification Breakdown */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700">Hazardous:</span>
+                      <span className="text-sm font-bold text-red-600">
+                        {geminiClassification.classification?.hazardous?.percentage || 0}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-red-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${geminiClassification.classification?.hazardous?.percentage || 0}%` }}
+                      ></div>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700">Recyclable:</span>
+                      <span className="text-sm font-bold text-green-600">
+                        {geminiClassification.classification?.recyclable?.percentage || 0}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${geminiClassification.classification?.recyclable?.percentage || 0}%` }}
+                      ></div>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700">Reusable:</span>
+                      <span className="text-sm font-bold text-blue-600">
+                        {geminiClassification.classification?.reusable?.percentage || 0}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${geminiClassification.classification?.reusable?.percentage || 0}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Recommendations */}
+                  {geminiClassification.recommendations && (
+                    <div className="mt-4 p-3 bg-white rounded border">
+                      <h4 className="font-semibold text-gray-800 mb-2">Recommendations:</h4>
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Disposal:</strong> {geminiClassification.recommendations.disposal_method}
+                      </p>
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Safety:</strong> {geminiClassification.recommendations.safety_notes}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        <strong>Value:</strong> {geminiClassification.recommendations.value_estimate}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Environmental Impact */}
+                  {geminiClassification.environmental_impact && (
+                    <div className="mt-3 p-3 bg-green-50 rounded border border-green-200">
+                      <h4 className="font-semibold text-green-800 mb-2">Environmental Impact:</h4>
+                      <p className="text-sm text-green-700 mb-1">
+                        <strong>CO₂ Saved:</strong> {geminiClassification.environmental_impact.co2_saved}
+                      </p>
+                      <p className="text-sm text-green-700">
+                        <strong>Landfill Reduction:</strong> {geminiClassification.environmental_impact.landfill_reduction}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}

@@ -286,6 +286,63 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
           </div>
         )}
 
+        {/* Gemini AI Classification Results */}
+        {item.geminiClassification && (
+          <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+            <p className="text-xs text-gray-500 mb-2">🤖 AI Analysis Results</p>
+            
+            {/* Classification Breakdown */}
+            <div className="space-y-2 mb-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-medium text-gray-700">Hazardous:</span>
+                <span className="text-xs font-bold text-red-600">
+                  {item.geminiClassification.classification?.hazardous?.percentage || 0}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-1">
+                <div 
+                  className="!bg-red-500 h-1 rounded-full transition-all duration-300"
+                  style={{ width: `${item.geminiClassification.classification?.hazardous?.percentage || 0}%` }}
+                ></div>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-medium text-gray-700">Recyclable:</span>
+                <span className="text-xs font-bold text-green-600">
+                  {item.geminiClassification.classification?.recyclable?.percentage || 0}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-1">
+                <div 
+                  className="bg-green-500 h-1 rounded-full transition-all duration-300"
+                  style={{ width: `${item.geminiClassification.classification?.recyclable?.percentage || 0}%` }}
+                ></div>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-medium text-gray-700">Reusable:</span>
+                <span className="text-xs font-bold text-blue-600">
+                  {item.geminiClassification.classification?.reusable?.percentage || 0}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-1">
+                <div 
+                  className="bg-blue-500 h-1 rounded-full transition-all duration-300"
+                  style={{ width: `${item.geminiClassification.classification?.reusable?.percentage || 0}%` }}
+                ></div>
+              </div>
+            </div>
+
+            {/* Quick Recommendations */}
+            {item.geminiClassification.recommendations && (
+              <div className="text-xs text-gray-600">
+                <p><strong>Disposal:</strong> {item.geminiClassification.recommendations.disposal_method}</p>
+                <p><strong>Value:</strong> {item.geminiClassification.recommendations.value_estimate}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Status and Actions */}
         <div className="flex items-center justify-between mb-4">
           <div className={`inline-flex items-center px-3 py-1 rounded-full ${StatusInfo.bg}`}>
@@ -311,7 +368,7 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
               <button
                 onClick={handleUpdateToInTransit}
                 disabled={isUpdatingToInTransit}
-                className="flex items-center px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center px-3 py-1 !bg-blue-600 text-white text-xs font-medium rounded-lg hover:!bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Scan className="w-3 h-3 mr-1" />
                 {isUpdatingToInTransit ? 'Updating...' : 'Scan QR'}
@@ -323,7 +380,7 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
               <button
                 onClick={handleMarkAsDone}
                 disabled={isMarkingAsDone}
-                className="flex items-center px-3 py-1 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center px-3 py-1 !bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <CheckCircle className="w-3 h-3 mr-1" />
                 {isMarkingAsDone ? 'Marking...' : 'Mark as Done'}

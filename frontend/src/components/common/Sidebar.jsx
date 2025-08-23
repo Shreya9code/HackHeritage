@@ -105,13 +105,13 @@ const Sidebar = () => {
 
         {/* Quick Actions */}
         {userRole && (
-          <div className="mt-8 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+          <div className="mt-8 p-4 !bg-emerald-50 rounded-lg border border-emerald-200">
             <h3 className="font-semibold text-emerald-700 mb-3">Quick Actions</h3>
             {userRole === 'company' && (
               <>
                 <NavLink
                   to="/analytics"
-                  className="w-full bg-purple-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:bg-purple-700 transition-colors mb-2 block"
+                  className="w-full !bg-purple-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:!bg-purple-700 transition-colors mb-2 block"
                 >
                   <TrendingUp className="w-4 h-4 mr-2" />
                   View Analytics
@@ -122,7 +122,7 @@ const Sidebar = () => {
               <>
                 <NavLink
                   to="/qr-generator"
-                  className="w-full bg-emerald-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:bg-emerald-700 transition-colors mb-2 block"
+                  className="w-full !bg-emerald-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:bg-emerald-700 transition-colors mb-2 block"
                 >
                   <QrCode className="w-4 h-4 mr-2" />
                   Generate QR Code
@@ -133,14 +133,14 @@ const Sidebar = () => {
                <>
                  <NavLink
                    to="/schedule"
-                   className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:bg-blue-700 transition-colors mb-2 block"
+                   className="w-full !bg-blue-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:!bg-blue-700 transition-colors mb-2 block"
                  >
                    <Calendar className="w-4 h-4 mr-2" />
                    View Pickups
                  </NavLink>
                  <NavLink
                    to="/analytics"
-                   className="w-full bg-purple-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:bg-purple-700 transition-colors mb-2 block"
+                   className="w-full !bg-purple-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:!bg-purple-700 transition-colors mb-2 block"
                  >
                    <TrendingUp className="w-4 h-4 mr-2" />
                    View Analytics

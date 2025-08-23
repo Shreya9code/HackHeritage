@@ -31,6 +31,35 @@ const ewasteSchema = new mongoose.Schema({
   completedBy: { type: String }, // Clerk ID of company who completed
   completedAt: { type: Date }, // When item was completed
   completionNotes: { type: String }, // Company notes when completing
+  // Gemini AI classification fields
+  geminiClassification: {
+    classification: {
+      hazardous: {
+        percentage: { type: Number, default: 0 },
+        components: [{ type: String }],
+        description: { type: String }
+      },
+      recyclable: {
+        percentage: { type: Number, default: 0 },
+        components: [{ type: String }],
+        description: { type: String }
+      },
+      reusable: {
+        percentage: { type: Number, default: 0 },
+        components: [{ type: String }],
+        description: { type: String }
+      }
+    },
+    recommendations: {
+      disposal_method: { type: String },
+      safety_notes: { type: String },
+      value_estimate: { type: String }
+    },
+    environmental_impact: {
+      co2_saved: { type: String },
+      landfill_reduction: { type: String }
+    }
+  }
 });
 
 module.exports = mongoose.model('Ewaste', ewasteSchema);
