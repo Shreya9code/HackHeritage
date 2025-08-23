@@ -172,7 +172,7 @@ const QRScanModal = ({ isOpen, onClose, item, onItemUpdate }) => {
                         {role === 'vendor' && <div className="w-2 h-2 bg-white rounded-full"></div>}
                       </div>
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <div className="w-10 h-10 !bg-blue-100 rounded-lg flex items-center justify-center">
                           <Truck className="w-5 h-5 text-blue-600" />
                         </div>
                         <div>

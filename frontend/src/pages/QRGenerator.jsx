@@ -427,7 +427,6 @@ const QRGenerator = () => {
                   className="w-full rounded-lg border px-3 py-2"
                 />
               </div>
-
               {/* Weight */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Weight</label>
@@ -511,7 +510,7 @@ const QRGenerator = () => {
                 <button
                   onClick={classifyWithGemini}
                   disabled={isClassifying || !qrData.itemType || (qrData.itemType === 'Other' && !qrData.customItemType)}
-                  className="w-full rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full rounded-lg !bg-blue-600 px-4 py-2 font-semibold text-white hover:!bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isClassifying ? 'Analyzing with AI...' : '🔍 Analyze with AI'}
                 </button>
@@ -519,7 +518,7 @@ const QRGenerator = () => {
 
               {/* AI Classification Results */}
               {geminiClassification && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="mt-4 p-4 !bg-blue-50 rounded-lg border border-blue-200">
                   <h3 className="text-lg font-semibold text-blue-900 mb-3">AI Analysis Results</h3>
                   
                   {/* Classification Breakdown */}
@@ -532,7 +531,7 @@ const QRGenerator = () => {
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
-                        className="bg-red-500 h-2 rounded-full transition-all duration-300"
+                        className="!bg-red-500 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${geminiClassification.classification?.hazardous?.percentage || 0}%` }}
                       ></div>
                     </div>
@@ -545,7 +544,7 @@ const QRGenerator = () => {
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
-                        className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                        className="!bg-green-500 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${geminiClassification.classification?.recyclable?.percentage || 0}%` }}
                       ></div>
                     </div>
@@ -556,17 +555,16 @@ const QRGenerator = () => {
                         {geminiClassification.classification?.reusable?.percentage || 0}%
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full !bg-gray-200 rounded-full h-2">
                       <div 
-                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                        className="!bg-blue-500 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${geminiClassification.classification?.reusable?.percentage || 0}%` }}
                       ></div>
                     </div>
                   </div>
-
                   {/* Recommendations */}
                   {geminiClassification.recommendations && (
-                    <div className="mt-4 p-3 bg-white rounded border">
+                    <div className="mt-4 p-3 !bg-white rounded border">
                       <h4 className="font-semibold text-gray-800 mb-2">Recommendations:</h4>
                       <p className="text-sm text-gray-600 mb-1">
                         <strong>Disposal:</strong> {geminiClassification.recommendations.disposal_method}
