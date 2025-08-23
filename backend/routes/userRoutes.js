@@ -122,7 +122,7 @@ router.post('/:role', async (req, res) => {
     } catch (error) {
         console.error('Error creating/updating user:', error);
         console.error('Request body:', req.body);
-        console.error('Role:', role);
+        console.error('Role:', req.params.role);
 
         // Handle duplicate key errors
         if (error.code === 11000) {

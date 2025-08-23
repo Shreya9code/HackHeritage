@@ -27,6 +27,10 @@ const ewasteSchema = new mongoose.Schema({
   inTransitBy: { type: String }, // Clerk ID of vendor who picked up
   inTransitAt: { type: Date }, // When item went into transit
   inTransitNotes: { type: String }, // Vendor notes when picking up
+  // Completion fields
+  completedBy: { type: String }, // Clerk ID of company who completed
+  completedAt: { type: Date }, // When item was completed
+  completionNotes: { type: String }, // Company notes when completing
 });
 
 module.exports = mongoose.model('Ewaste', ewasteSchema);

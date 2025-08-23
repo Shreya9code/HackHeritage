@@ -55,6 +55,16 @@ export const ewasteAPI = {
     }
   },
 
+  // Mark item as done (company function)
+  markAsDone: async (itemId, companyId, notes = '') => {
+    try {
+      const response = await api.put(`/ewastes/${itemId}/done`, { companyId, notes });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to mark item as done');
+    }
+  },
+
   // Create new e-waste item
   create: async (ewasteData) => {
     try {

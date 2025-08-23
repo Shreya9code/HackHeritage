@@ -17,7 +17,8 @@ import {
   Check,
   User,
   Truck,
-  Scan
+  Scan,
+  Building
 } from 'lucide-react';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { ewasteAPI } from '../../services/api';
@@ -27,6 +28,7 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
   const [showQR, setShowQR] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [isUpdatingToInTransit, setIsUpdatingToInTransit] = useState(false);
+  const [isMarkingAsDone, setIsMarkingAsDone] = useState(false);
   const { user } = useUser();
 
   const getIcon = (category) => {
@@ -95,6 +97,26 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
       alert('Failed to update item status. Please try again.');
     } finally {
       setIsUpdatingToInTransit(false);
+    }
+  };
+
+  const handleMarkAsDone = async () => {
+    if (!user || !item.id) return;
+    
+    setIsMarkingAsDone(true);
+    try {
+      const updatedItem = await ewasteAPI.markAsDone(item.id, user.id, 'Item collected and processed by company');
+      console.log('✅ Item marked as done successfully:', updatedItem);
+      
+      // Call the parent callback to update the item in the inventory
+      if (onItemUpdate) {
+        onItemUpdate(updatedItem);
+      }
+    } catch (error) {
+      console.error('❌ Error marking item as done:', error);
+      alert('Failed to mark item as done. Please try again.');
+    } finally {
+      setIsMarkingAsDone(false);
     }
   };
 
@@ -245,6 +267,25 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
           </div>
         )}
 
+        {/* Completion Info */}
+        {item.completedBy && (
+          <div className="mb-4 p-3 bg-green-50 rounded-lg">
+            <p className="text-xs text-gray-500 mb-1">Completed By Company</p>
+            <div className="flex items-center space-x-2">
+              <Building className="w-4 h-4 text-green-600" />
+              <p className="text-sm font-medium text-green-700">{item.completedBy}</p>
+            </div>
+            {item.completedAt && (
+              <p className="text-xs text-green-600 mt-1">
+                {new Date(item.completedAt).toLocaleDateString()}
+              </p>
+            )}
+            {item.completionNotes && (
+              <p className="text-xs text-green-600 mt-1">{item.completionNotes}</p>
+            )}
+          </div>
+        )}
+
         {/* Status and Actions */}
         <div className="flex items-center justify-between mb-4">
           <div className={`inline-flex items-center px-3 py-1 rounded-full ${StatusInfo.bg}`}>
@@ -274,6 +315,18 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
               >
                 <Scan className="w-3 h-3 mr-1" />
                 {isUpdatingToInTransit ? 'Updating...' : 'Scan QR'}
+              </button>
+            )}
+            
+            {/* Mark as Done Button for Companies (only on in transit items) */}
+            {userRole === 'company' && item.status === 'in transit' && (
+              <button
+                onClick={handleMarkAsDone}
+                disabled={isMarkingAsDone}
+                className="flex items-center px-3 py-1 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <CheckCircle className="w-3 h-3 mr-1" />
+                {isMarkingAsDone ? 'Marking...' : 'Mark as Done'}
               </button>
             )}
             

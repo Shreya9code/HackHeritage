@@ -63,7 +63,7 @@ const Analytics = () => {
   const departmentData = [
     { name: 'IT Department', value: 45, color: '#3B82F6' },
     { name: 'Science Block', value: 25, color: '#10B981' },
-    { name: 'Admin Office', value: 15, color: '#F59E0B' },
+    { name: 'Company Office', value: 15, color: '#F59E0B' },
     { name: 'Library', value: 10, color: '#8B5CF6' },
     { name: 'Classrooms', value: 5, color: '#EC4899' }
   ];

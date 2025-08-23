@@ -36,7 +36,7 @@ const AddItemModal = ({ isOpen, onClose, onAddItem }) => {
   const departments = [
     'IT Department',
     'Science Block',
-    'Admin Office',
+    'Company Office',
     'Computer Lab',
     'Library',
     'Classroom'

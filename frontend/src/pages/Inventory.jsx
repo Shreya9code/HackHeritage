@@ -67,7 +67,7 @@ const Inventory = () => {
           estimatedPrice: item.estimatedPrice,
           shortNote: item.shortNote,
           age: item.age,
-          donorId: item.donorId, // Include donor ID for vendor/admin view
+          donorId: item.donorId, // Include donor ID for vendor/company view
           // Vendor acceptance fields
           vendorAcceptedBy: item.vendorAcceptedBy,
           vendorAcceptedAt: item.vendorAcceptedAt,
@@ -75,7 +75,11 @@ const Inventory = () => {
           // In transit fields
           inTransitBy: item.inTransitBy,
           inTransitAt: item.inTransitAt,
-          inTransitNotes: item.inTransitNotes
+          inTransitNotes: item.inTransitNotes,
+          // Completion fields
+          completedBy: item.completedBy,
+          completedAt: item.completedAt,
+          completionNotes: item.completionNotes
         }));
         
         // SECURITY CHECK: For donors, ensure they only see their own items
@@ -129,7 +133,11 @@ const Inventory = () => {
         // In transit fields
         inTransitBy: updatedItem.inTransitBy,
         inTransitAt: updatedItem.inTransitAt,
-        inTransitNotes: updatedItem.inTransitNotes
+        inTransitNotes: updatedItem.inTransitNotes,
+        // Completion fields
+        completedBy: updatedItem.completedBy,
+        completedAt: updatedItem.completedAt,
+        completionNotes: updatedItem.completionNotes
       } : item
     ));
   };
@@ -182,7 +190,11 @@ const Inventory = () => {
           // In transit fields
           inTransitBy: item.inTransitBy,
           inTransitAt: item.inTransitAt,
-          inTransitNotes: item.inTransitNotes
+          inTransitNotes: item.inTransitNotes,
+          // Completion fields
+          completedBy: item.completedBy,
+          completedAt: item.completedAt,
+          completionNotes: item.completionNotes
         }));
         
         // SECURITY CHECK: For donors, ensure they only see their own items

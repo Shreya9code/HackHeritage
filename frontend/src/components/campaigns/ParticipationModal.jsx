@@ -29,7 +29,7 @@ const ParticipationModal = ({ isOpen, onClose, campaign, onParticipate }) => {
   const departments = [
     'IT Department',
     'Science Department',
-    'Administration',
+    'Company',
     'Student',
     'Faculty',
     'Other'

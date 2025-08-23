@@ -181,7 +181,7 @@ const RoleSelection = () => {
               {[
                 { id: 'donor', title: 'Donor', description: 'I want to donate e-waste items', icon: '♻️' },
                 { id: 'vendor', title: 'Vendor', description: 'I process and handle e-waste', icon: '🏭' },
-                { id: 'company', title: 'Company Admin', description: 'I manage company operations', icon: '🏢' }
+                { id: 'company', title: 'Company', description: 'I manage company operations', icon: '🏢' }
               ].map((role) => (
                 <button
                   key={role.id}

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-// Admin Dashboard Component
-function AdminDashboard() {
+// Admin Dashboard Component (for company users)
+function CompanyDashboard() {
   const [systemStats] = useState({
     totalUsers: 1247,
     totalDonations: 8923,
@@ -12,25 +12,37 @@ function AdminDashboard() {
     complianceRate: '94.2%'
   });
 
-  const [recentActivity] = useState([
-    { id: 1, type: 'New User', user: 'john.doe@email.com', action: 'Registered as Donor', time: '2 minutes ago' },
-    { id: 2, type: 'Pickup', user: 'vendor_tech', action: 'Completed pickup #1234', time: '15 minutes ago' },
-    { id: 3, type: 'Campaign', user: 'admin', action: 'Launched "Green January" campaign', time: '1 hour ago' },
-    { id: 4, type: 'Compliance', user: 'system', action: 'Monthly compliance report generated', time: '2 hours ago' },
-  ]);
-
   const [topVendors] = useState([
     { id: 1, name: 'EcoTech Solutions', pickups: 234, rating: 4.8, revenue: '$8,450' },
     { id: 2, name: 'Green Recycling Co.', pickups: 189, rating: 4.6, revenue: '$6,230' },
     { id: 3, name: 'Sustainable Waste', pickups: 156, rating: 4.9, revenue: '$5,890' },
   ]);
 
+  const [pendingPickups] = useState([
+    { id: 1, item: 'Laptop', donor: 'John Doe', location: 'IT Department', priority: 'High', time: '2 hours ago' },
+    { id: 2, item: 'Monitor', donor: 'Jane Smith', location: 'Science Block', priority: 'Medium', time: '4 hours ago' },
+    { id: 3, item: 'Printer', donor: 'Mike Johnson', location: 'Admin Office', priority: 'Low', time: '6 hours ago' },
+  ]);
+
+  const [processingItems] = useState([
+    { id: 1, item: 'Desktop Computer', weight: '5.2 kg', status: 'Disassembly', progress: 75 },
+    { id: 2, item: 'Mobile Phones', weight: '0.8 kg', status: 'Testing', progress: 45 },
+    { id: 3, item: 'Batteries', weight: '2.1 kg', status: 'Recycling', progress: 90 },
+  ]);
+
+  const recentActivity = [
+    { id: 1, type: 'Item', user: 'vendor', action: 'Accepted e-waste item #EW001', time: '5 minutes ago' },
+    { id: 2, type: 'Item', user: 'donor', action: 'Submitted new e-waste item', time: '15 minutes ago' },
+    { id: 3, type: 'Campaign', user: 'admin', action: 'Launched "Green January" campaign', time: '1 hour ago' },
+    { id: 4, type: 'Item', user: 'vendor', action: 'Picked up item #EW002', time: '2 hours ago' },
+    { id: 5, type: 'Item', user: 'admin', action: 'Completed processing item #EW003', time: '3 hours ago' }
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl p-6 text-white">
+    <div className="p-6">
+      <div className="mb-8">
         <h1 className="text-2xl font-bold mb-2">Welcome back, Administrator!</h1>
-        <p className="text-purple-100">Monitor and manage the entire e-waste management platform.</p>
+        <p className="text-gray-600">Here's what's happening with your e-waste management system today.</p>
       </div>
 
       {/* Quick Actions */}
@@ -595,8 +607,8 @@ function VendorDashboard() {
         </div>
         <div>
                     <p className="font-medium text-gray-900">{pickup.item}</p>
-                    <p className="text-sm text-gray-600">{pickup.donor} • {pickup.address}</p>
-                    <p className="text-xs text-gray-500">Scheduled: {pickup.date}</p>
+                    <p className="text-sm text-gray-600">{pickup.donor} • {pickup.location}</p>
+                    <p className="text-xs text-gray-500">Scheduled: {pickup.time}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -681,7 +693,7 @@ const Dashboard = () => {
   // Render appropriate dashboard based on user role
   switch (userRole) {
     case 'company':
-      return <AdminDashboard />;
+      return <CompanyDashboard />;
     case 'donor':
       return <DonorDashboard />;
     case 'vendor':

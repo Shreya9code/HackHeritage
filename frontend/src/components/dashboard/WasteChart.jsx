@@ -71,7 +71,7 @@ const WasteChart = () => {
   };
 
   const departmentData = {
-    labels: ['IT Dept', 'Science Block', 'Admin', 'Library', 'Classrooms'],
+    labels: ['IT Dept', 'Science Block', 'Company', 'Library', 'Classrooms'],
     datasets: [
       {
         label: 'E-Waste Contribution',

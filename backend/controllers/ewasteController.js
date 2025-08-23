@@ -153,6 +153,47 @@ exports.updateToInTransit = async (req, res) => {
   }
 };
 
+// Update item status to "done" when company marks as completed (for in transit items)
+exports.updateToDone = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { companyId, notes } = req.body;
+    
+    console.log('🏢 Company marking item as done:', { itemId: id, companyId, notes });
+    
+    // First check if the item exists and is in "in transit" status
+    const existingEwaste = await Ewaste.findById(id);
+    if (!existingEwaste) {
+      return res.status(404).json({ message: 'E-waste item not found' });
+    }
+    
+    if (existingEwaste.status !== 'in transit') {
+      return res.status(400).json({ 
+        message: 'Item cannot be marked as done. Only items with status "in transit" can be completed.' 
+      });
+    }
+    
+    // Update the item status to "done"
+    const ewaste = await Ewaste.findByIdAndUpdate(
+      id,
+      { 
+        status: 'done',
+        completedBy: companyId,
+        completedAt: new Date(),
+        completionNotes: notes,
+        updatedAt: new Date()
+      },
+      { new: true }
+    );
+    
+    console.log('✅ Item marked as done successfully:', ewaste.serial, 'Status:', ewaste.status);
+    res.status(200).json(ewaste);
+  } catch (err) {
+    console.error('❌ Error marking item as done:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // Get e-waste items by donor ID (Clerk ID)
 exports.getEwasteByDonorId = async (req, res) => {
   try {
