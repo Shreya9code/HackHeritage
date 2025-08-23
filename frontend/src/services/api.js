@@ -45,6 +45,16 @@ export const ewasteAPI = {
     }
   },
 
+  // Update item to "in transit" (vendor function)
+  updateToInTransit: async (itemId, vendorId, notes = '') => {
+    try {
+      const response = await api.put(`/ewastes/${itemId}/in-transit`, { vendorId, notes });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to update item to in transit');
+    }
+  },
+
   // Create new e-waste item
   create: async (ewasteData) => {
     try {

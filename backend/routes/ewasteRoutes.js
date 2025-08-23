@@ -10,5 +10,6 @@ router.get('/serial/:serial', ewasteController.getEwasteBySerial); // get by ser
 router.put('/:id/status', ewasteController.updateStatus); // update status
 router.put('/serial/:serial/status', ewasteController.updateStatusBySerial); // update status by serial
 router.put('/:id/accept', ewasteController.acceptEwasteItem); // vendor accepts item
+router.put('/:id/in-transit', ewasteController.updateToInTransit); // vendor updates to in transit
 
 module.exports = router;

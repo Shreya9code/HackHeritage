@@ -23,6 +23,10 @@ const ewasteSchema = new mongoose.Schema({
   vendorAcceptedBy: { type: String }, // Clerk ID of vendor who accepted
   vendorAcceptedAt: { type: Date }, // When vendor accepted
   vendorNotes: { type: String }, // Vendor notes when accepting
+  // In transit fields
+  inTransitBy: { type: String }, // Clerk ID of vendor who picked up
+  inTransitAt: { type: Date }, // When item went into transit
+  inTransitNotes: { type: String }, // Vendor notes when picking up
 });
 
 module.exports = mongoose.model('Ewaste', ewasteSchema);

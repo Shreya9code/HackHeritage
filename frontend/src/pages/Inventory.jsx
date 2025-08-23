@@ -71,7 +71,11 @@ const Inventory = () => {
           // Vendor acceptance fields
           vendorAcceptedBy: item.vendorAcceptedBy,
           vendorAcceptedAt: item.vendorAcceptedAt,
-          vendorNotes: item.vendorNotes
+          vendorNotes: item.vendorNotes,
+          // In transit fields
+          inTransitBy: item.inTransitBy,
+          inTransitAt: item.inTransitAt,
+          inTransitNotes: item.inTransitNotes
         }));
         
         // SECURITY CHECK: For donors, ensure they only see their own items
@@ -121,7 +125,11 @@ const Inventory = () => {
         status: updatedItem.status,
         vendorAcceptedBy: updatedItem.vendorAcceptedBy,
         vendorAcceptedAt: updatedItem.vendorAcceptedAt,
-        vendorNotes: updatedItem.vendorNotes
+        vendorNotes: updatedItem.vendorNotes,
+        // In transit fields
+        inTransitBy: updatedItem.inTransitBy,
+        inTransitAt: updatedItem.inTransitAt,
+        inTransitNotes: updatedItem.inTransitNotes
       } : item
     ));
   };
@@ -170,7 +178,11 @@ const Inventory = () => {
           // Vendor acceptance fields
           vendorAcceptedBy: item.vendorAcceptedBy,
           vendorAcceptedAt: item.vendorAcceptedAt,
-          vendorNotes: item.vendorNotes
+          vendorNotes: item.vendorNotes,
+          // In transit fields
+          inTransitBy: item.inTransitBy,
+          inTransitAt: item.inTransitAt,
+          inTransitNotes: item.inTransitNotes
         }));
         
         // SECURITY CHECK: For donors, ensure they only see their own items

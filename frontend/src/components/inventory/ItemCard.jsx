@@ -16,7 +16,8 @@ import {
   AlertTriangle,
   Check,
   User,
-  Truck
+  Truck,
+  Scan
 } from 'lucide-react';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { ewasteAPI } from '../../services/api';
@@ -25,6 +26,7 @@ import { useUser } from '@clerk/clerk-react';
 const ItemCard = ({ item, userRole, onItemUpdate }) => {
   const [showQR, setShowQR] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
+  const [isUpdatingToInTransit, setIsUpdatingToInTransit] = useState(false);
   const { user } = useUser();
 
   const getIcon = (category) => {
@@ -73,6 +75,26 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
       alert('Failed to accept item. Please try again.');
     } finally {
       setIsAccepting(false);
+    }
+  };
+
+  const handleUpdateToInTransit = async () => {
+    if (!user || !item.id) return;
+    
+    setIsUpdatingToInTransit(true);
+    try {
+      const updatedItem = await ewasteAPI.updateToInTransit(item.id, user.id, 'Item picked up and in transit');
+      console.log('✅ Item status updated to in transit successfully:', updatedItem);
+      
+      // Call the parent callback to update the item in the inventory
+      if (onItemUpdate) {
+        onItemUpdate(updatedItem);
+      }
+    } catch (error) {
+      console.error('❌ Error updating item to in transit:', error);
+      alert('Failed to update item status. Please try again.');
+    } finally {
+      setIsUpdatingToInTransit(false);
     }
   };
 
@@ -204,6 +226,25 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
           </div>
         )}
 
+        {/* In Transit Info */}
+        {item.inTransitBy && (
+          <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+            <p className="text-xs text-gray-500 mb-1">In Transit By</p>
+            <div className="flex items-center space-x-2">
+              <Truck className="w-4 h-4 text-blue-600" />
+              <p className="text-sm font-medium text-blue-700">{item.inTransitBy}</p>
+            </div>
+            {item.inTransitAt && (
+              <p className="text-xs text-blue-600 mt-1">
+                {new Date(item.inTransitAt).toLocaleDateString()}
+              </p>
+            )}
+            {item.inTransitNotes && (
+              <p className="text-xs text-blue-600 mt-1">{item.inTransitNotes}</p>
+            )}
+          </div>
+        )}
+
         {/* Status and Actions */}
         <div className="flex items-center justify-between mb-4">
           <div className={`inline-flex items-center px-3 py-1 rounded-full ${StatusInfo.bg}`}>
@@ -221,6 +262,18 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
               >
                 <Check className="w-3 h-3 mr-1" />
                 {isAccepting ? 'Accepting...' : 'Accept'}
+              </button>
+            )}
+            
+            {/* Scan QR Button for Vendors (only on accepted items) */}
+            {userRole === 'vendor' && item.status === 'waiting for pickup' && (
+              <button
+                onClick={handleUpdateToInTransit}
+                disabled={isUpdatingToInTransit}
+                className="flex items-center px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Scan className="w-3 h-3 mr-1" />
+                {isUpdatingToInTransit ? 'Updating...' : 'Scan QR'}
               </button>
             )}
             

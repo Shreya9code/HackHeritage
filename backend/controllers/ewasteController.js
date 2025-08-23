@@ -112,6 +112,47 @@ exports.acceptEwasteItem = async (req, res) => {
   }
 };
 
+// Update item status to "in transit" when vendor scans QR (for accepted items)
+exports.updateToInTransit = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { vendorId, notes } = req.body;
+    
+    console.log('🚚 Vendor updating item to in transit:', { itemId: id, vendorId, notes });
+    
+    // First check if the item exists and is in "waiting for pickup" status
+    const existingEwaste = await Ewaste.findById(id);
+    if (!existingEwaste) {
+      return res.status(404).json({ message: 'E-waste item not found' });
+    }
+    
+    if (existingEwaste.status !== 'waiting for pickup') {
+      return res.status(400).json({ 
+        message: 'Item cannot be updated to in transit. Only items with status "waiting for pickup" can be updated.' 
+      });
+    }
+    
+    // Update the item status to "in transit"
+    const ewaste = await Ewaste.findByIdAndUpdate(
+      id,
+      { 
+        status: 'in transit',
+        inTransitBy: vendorId,
+        inTransitAt: new Date(),
+        inTransitNotes: notes,
+        updatedAt: new Date()
+      },
+      { new: true }
+    );
+    
+    console.log('✅ Item status updated to in transit successfully:', ewaste.serial, 'Status:', ewaste.status);
+    res.status(200).json(ewaste);
+  } catch (err) {
+    console.error('❌ Error updating item to in transit:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // Get e-waste items by donor ID (Clerk ID)
 exports.getEwasteByDonorId = async (req, res) => {
   try {
