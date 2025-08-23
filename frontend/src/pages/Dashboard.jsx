@@ -496,42 +496,12 @@ function VendorDashboard() {
         </Link>
 
         <Link
-          to="/schedule"
-          className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
-        >
-          <div className="flex items-center">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-              <span className="text-green-600 text-xl">🚚</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Pickups</h3>
-              <p className="text-sm text-gray-600">View pickup requests</p>
-            </div>
-          </div>
-        </Link>
-
-                 <Link
-           to="/analytics"
-           className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
-         >
-           <div className="flex items-center">
-             <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-               <span className="text-purple-600 text-xl">📊</span>
-             </div>
-             <div>
-               <h3 className="font-semibold text-gray-900">Analytics</h3>
-               <p className="text-sm text-gray-600">View performance data</p>
-             </div>
-           </div>
-         </Link>
-
-        <Link
           to="/analytics"
           className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
         >
           <div className="flex items-center">
-            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
-              <span className="text-orange-600 text-xl">📊</span>
+            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+              <span className="text-purple-600 text-xl">📊</span>
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Analytics</h3>
@@ -539,6 +509,8 @@ function VendorDashboard() {
             </div>
           </div>
         </Link>
+
+
       </div>
 
       {/* Stats Cards */}
@@ -592,10 +564,10 @@ function VendorDashboard() {
         </div>
       </div>
       
-      {/* Pending Pickups */}
+      {/* Pending Items */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Pending Pickups</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Pending Items</h3>
         </div>
         <div className="p-4">
           <div className="space-y-3">
@@ -608,7 +580,7 @@ function VendorDashboard() {
         <div>
                     <p className="font-medium text-gray-900">{pickup.item}</p>
                     <p className="text-sm text-gray-600">{pickup.donor} • {pickup.location}</p>
-                    <p className="text-xs text-gray-500">Scheduled: {pickup.time}</p>
+                    <p className="text-xs text-gray-500">Requested: {pickup.time}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">

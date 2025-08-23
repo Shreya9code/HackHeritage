@@ -47,16 +47,13 @@ const Sidebar = () => {
              case 'vendor':
          return [
            ...baseItems,
-           { path: "/schedule", label: "Pickup Schedule", icon: Calendar },
            { path: "/compliance", label: "Compliance", icon: FileText },
            { path: "/analytics", label: "Analytics", icon: TrendingUp },
          ];
       case 'company':
         return [
           ...baseItems,
-          { path: "/schedule", label: "Schedule Management", icon: Calendar },
           { path: "/compliance", label: "Compliance", icon: FileText },
-          { path: "/qr-generator", label: "QR Generator", icon: QrCode },
           { path: "/analytics", label: "Analytics", icon: TrendingUp },
           { path: "/campaigns", label: "Campaigns", icon: Megaphone },
         ];
@@ -112,13 +109,6 @@ const Sidebar = () => {
             <h3 className="font-semibold text-emerald-700 mb-3">Quick Actions</h3>
             {userRole === 'company' && (
               <>
-                <NavLink
-                  to="/qr-generator"
-                  className="w-full bg-emerald-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:bg-emerald-700 transition-colors mb-2 block"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add New Item
-                </NavLink>
                 <NavLink
                   to="/analytics"
                   className="w-full bg-purple-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:bg-purple-700 transition-colors mb-2 block"

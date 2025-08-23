@@ -37,7 +37,7 @@ const RecentActivity = () => {
     {
       id: 3,
       type: 'pickup',
-      title: 'Pickup scheduled',
+      title: 'Item accepted',
       description: 'Lab equipment from Science Block',
       time: 'Yesterday',
       icon: Truck,
@@ -74,7 +74,7 @@ const RecentActivity = () => {
     { value: 'all', label: 'All Activities', icon: Clock },
     { value: 'addition', label: 'Additions', icon: Plus },
     { value: 'recycling', label: 'Recycling', icon: Recycle },
-    { value: 'pickup', label: 'Pickups', icon: Truck },
+    { value: 'pickup', label: 'Acceptances', icon: Truck },
     { value: 'qr', label: 'QR Codes', icon: QrCode },
     { value: 'alert', label: 'Alerts', icon: AlertCircle },
   ];

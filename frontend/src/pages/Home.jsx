@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import Header from '../components/common/Header';
-import Footer from '../components/common/Footer';
 import Dashboard from './Dashboard';
 import Inventory from './Inventory';
-import Schedule from './Schedule';
 import Compliance from './Compliance';
 import QRGenerator from './QRGenerator';
 import Analytics from './Analytics';
 import Campaigns from './Campaigns';
+import Header from '../components/common/Header';
+import Footer from '../components/common/Footer';
 
 const Home = () => {
   const [activePage, setActivePage] = useState('dashboard');
@@ -18,8 +17,6 @@ const Home = () => {
         return <Dashboard />;
       case 'inventory':
         return <Inventory />;
-      case 'schedule':
-        return <Schedule />;
       case 'compliance':
         return <Compliance />;
       case 'qr-generator':
@@ -48,22 +45,17 @@ const Home = () => {
             <span className="!bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Sustainable E‑Waste Management</span>
           </h1>
           <p className="max-w-prose text-base leading-relaxed text-gray-600 md:text-lg">
-            Track inventory, schedule certified pickups, generate QR codes, and stay compliant — all in one place.
+            Track inventory, generate QR codes, and stay compliant — all in one place.
           </p>
           <div className="flex flex-wrap gap-3 pt-2">
             <button
-              onClick={() => setActivePage('schedule')}
-              className="inline-flex items-center justify-center rounded-lg !bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:!bg-emerald-700 hover:shadow-md active:translate-y-0">
-              Schedule Pickup
-            </button>
-            <button
               onClick={() => setActivePage('qr-generator')}
-              className="inline-flex items-center justify-center rounded-lg border border-emerald-300 bg-white/70 px-4 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:!bg-emerald-50 hover:shadow-md active:translate-y-0">
+              className="inline-flex items-center justify-center rounded-lg !bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:!bg-emerald-700 hover:shadow-md active:translate-y-0">
               Generate QR
             </button>
             <button
               onClick={() => setActivePage('inventory')}
-              className="inline-flex items-center justify-center rounded-lg border border-teal-300 bg-white/70 px-4 py-2.5 text-sm font-semibold text-teal-700 shadow-sm transition hover:-translate-y-0.5 hover:!bg-teal-50 hover:shadow-md active:translate-y-0">
+              className="inline-flex items-center justify-center rounded-lg border border-emerald-300 bg-white/70 px-4 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:!bg-emerald-50 hover:shadow-md active:translate-y-0">
               View Inventory
             </button>
           </div>

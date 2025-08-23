@@ -13,7 +13,6 @@ import {
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
-import Schedule from "./pages/Schedule";
 import Compliance from "./pages/Compliance";
 import QRGenerator from "./pages/QRGenerator";
 import Analytics from "./pages/Analytics";
@@ -98,7 +97,6 @@ function ProtectedLayout() {
                 <Routes>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/inventory" element={<Inventory />} />
-                  <Route path="/schedule" element={<Schedule />} />
                   <Route path="/compliance" element={<Compliance />} />
                   <Route path="/qr-generator" element={<QRGenerator />} />
                   <Route path="/analytics" element={<Analytics />} />

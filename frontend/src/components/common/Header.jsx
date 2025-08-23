@@ -72,7 +72,7 @@ const Header = ({ onMenuToggle, showAuthButtons = false }) => {
                   </div>
                   <div className="max-h-60 overflow-y-auto">
                     <div className="px-4 py-3 hover:!bg-gray-50">
-                      <p className="text-sm">New e-waste pickup scheduled for tomorrow</p>
+                      <p className="text-sm">New e-waste item added to inventory</p>
                       <p className="text-xs text-gray-500 mt-1">2 hours ago</p>
                     </div>
                     <div className="px-4 py-3 hover:!bg-gray-50">
