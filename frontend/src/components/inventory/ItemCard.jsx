@@ -46,17 +46,17 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
   const getStatusInfo = (status) => {
     switch(status) {
       case 'done':
-        return { color: 'text-green-600', bg: 'bg-green-100', icon: CheckCircle, label: 'Completed' };
+        return { color: 'text-green-600', bg: '!bg-green-100', icon: CheckCircle, label: 'Completed' };
       case 'waiting for pickup':
-        return { color: 'text-yellow-600', bg: 'bg-yellow-100', icon: Clock, label: 'Waiting for Pickup' };
+        return { color: 'text-yellow-600', bg: '!bg-yellow-100', icon: Clock, label: 'Waiting for Pickup' };
       case 'in transit':
-        return { color: 'text-blue-600', bg: 'bg-blue-100', icon: Clock, label: 'In Transit' };
+        return { color: 'text-blue-600', bg: '!bg-blue-100', icon: Clock, label: 'In Transit' };
       case 'processing':
-        return { color: 'text-purple-600', bg: 'bg-purple-100', icon: Clock, label: 'Processing' };
+        return { color: 'text-purple-600', bg: '!bg-purple-100', icon: Clock, label: 'Processing' };
       case 'reported':
-        return { color: 'text-orange-600', bg: 'bg-orange-100', icon: Clock, label: 'Reported' };
+        return { color: 'text-orange-600', bg: '!bg-orange-100', icon: Clock, label: 'Reported' };
       default:
-        return { color: 'text-gray-600', bg: 'bg-gray-100', icon: Clock, label: status || 'Unknown' };
+        return { color: 'text-gray-600', bg: '!bg-gray-100', icon: Clock, label: status || 'Unknown' };
     }
   };
 
@@ -125,11 +125,11 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
   const StatusIcon = StatusInfo.icon;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 overflow-hidden">
+    <div className="!bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-gray-100 flex justify-between items-center">
         <div className="flex items-center space-x-3">
-          <div className={`w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center`}>
+          <div className={`w-10 h-10 rounded-full !bg-blue-100 flex items-center justify-center`}>
             <IconComponent className="w-5 h-5 text-blue-600" />
           </div>
           <div>
@@ -139,7 +139,7 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
         </div>
         
         <Menu as="div" className="relative">
-          <MenuButton className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
+          <MenuButton className="p-1 rounded-lg hover:!bg-gray-100 transition-colors">
             <MoreVertical className="w-5 h-5 text-gray-400" />
           </MenuButton>
           <MenuItems className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
@@ -159,7 +159,7 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
             </MenuItem>
             <MenuItem>
               {({ active }) => (
-                <button className={`flex items-center w-full px-4 py-2 text-sm text-red-600 ${active ? 'bg-red-50' : ''}`}>
+                <button className={`flex items-center w-full px-4 py-2 text-sm text-red-600 ${active ? '!bg-red-50' : ''}`}>
                   <Trash2 className="w-4 h-4 mr-2" /> Delete
                 </button>
               )}
@@ -223,7 +223,7 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
 
         {/* Donor ID (for vendors and companies) */}
         {item.donorId && (
-          <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+          <div className="mb-4 p-3 !bg-blue-50 rounded-lg">
             <p className="text-xs text-gray-500 mb-1">Donor ID</p>
             <p className="text-sm font-mono font-medium text-blue-700">{item.donorId}</p>
           </div>
@@ -231,7 +231,7 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
 
         {/* Vendor Acceptance Info */}
         {item.vendorAcceptedBy && (
-          <div className="mb-4 p-3 bg-green-50 rounded-lg">
+          <div className="mb-4 p-3 !bg-green-50 rounded-lg">
             <p className="text-xs text-gray-500 mb-1">Accepted By Vendor</p>
             <div className="flex items-center space-x-2">
               <Truck className="w-4 h-4 text-green-600" />
@@ -288,7 +288,7 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
 
         {/* Gemini AI Classification Results */}
         {item.geminiClassification && (
-          <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+          <div className="mb-4 p-3 !bg-purple-50 rounded-lg border border-purple-200">
             <p className="text-xs text-gray-500 mb-2">🤖 AI Analysis Results</p>
             
             {/* Classification Breakdown */}
@@ -299,7 +299,7 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
                   {item.geminiClassification.classification?.hazardous?.percentage || 0}%
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-1">
+              <div className="w-full !bg-gray-200 rounded-full h-1">
                 <div 
                   className="!bg-red-500 h-1 rounded-full transition-all duration-300"
                   style={{ width: `${item.geminiClassification.classification?.hazardous?.percentage || 0}%` }}
@@ -314,7 +314,7 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
               </div>
               <div className="w-full bg-gray-200 rounded-full h-1">
                 <div 
-                  className="bg-green-500 h-1 rounded-full transition-all duration-300"
+                  className="!bg-green-500 h-1 rounded-full transition-all duration-300"
                   style={{ width: `${item.geminiClassification.classification?.recyclable?.percentage || 0}%` }}
                 ></div>
               </div>
@@ -327,7 +327,7 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
               </div>
               <div className="w-full bg-gray-200 rounded-full h-1">
                 <div 
-                  className="bg-blue-500 h-1 rounded-full transition-all duration-300"
+                  className="!bg-blue-500 h-1 rounded-full transition-all duration-300"
                   style={{ width: `${item.geminiClassification.classification?.reusable?.percentage || 0}%` }}
                 ></div>
               </div>
@@ -356,7 +356,7 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
               <button
                 onClick={handleAcceptItem}
                 disabled={isAccepting}
-                className="flex items-center px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center px-3 py-1 !bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Check className="w-3 h-3 mr-1" />
                 {isAccepting ? 'Accepting...' : 'Accept'}
