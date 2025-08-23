@@ -155,8 +155,6 @@ const QRGenerator = () => {
     };
   }, [generatedSerial, qrData, geminiClassification]);
 
-
-
   const itemTypes = [
     'Laptop',
     'Desktop Computer',

@@ -12,5 +12,6 @@ router.put('/serial/:serial/status', ewasteController.updateStatusBySerial); // 
 router.put('/:id/accept', ewasteController.acceptEwasteItem); // vendor accepts item
 router.put('/:id/in-transit', ewasteController.updateToInTransit); // vendor updates to in transit
 router.put('/:id/done', ewasteController.updateToDone); // company marks as done
+router.post('/update-status', ewasteController.updateStatusWithRole); // new endpoint for role-based status updates
 
 module.exports = router;

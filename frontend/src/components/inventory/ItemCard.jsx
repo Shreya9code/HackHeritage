@@ -23,9 +23,11 @@ import {
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { ewasteAPI } from '../../services/api';
 import { useUser } from '@clerk/clerk-react';
+import QRScanModal from './QRScanModal';
 
 const ItemCard = ({ item, userRole, onItemUpdate }) => {
   const [showQR, setShowQR] = useState(false);
+  const [showQRScanModal, setShowQRScanModal] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [isUpdatingToInTransit, setIsUpdatingToInTransit] = useState(false);
   const [isMarkingAsDone, setIsMarkingAsDone] = useState(false);
@@ -118,6 +120,14 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
     } finally {
       setIsMarkingAsDone(false);
     }
+  };
+
+  const handleScanQR = () => {
+    setShowQRScanModal(true);
+  };
+
+  const handleQRScanModalClose = () => {
+    setShowQRScanModal(false);
   };
 
   const IconComponent = getIcon(item.category);
@@ -366,24 +376,22 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
             {/* Scan QR Button for Vendors (only on accepted items) */}
             {userRole === 'vendor' && item.status === 'waiting for pickup' && (
               <button
-                onClick={handleUpdateToInTransit}
-                disabled={isUpdatingToInTransit}
+                onClick={handleScanQR}
                 className="flex items-center px-3 py-1 !bg-blue-600 text-white text-xs font-medium rounded-lg hover:!bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Scan className="w-3 h-3 mr-1" />
-                {isUpdatingToInTransit ? 'Updating...' : 'Scan QR'}
+                Pick Up Item
               </button>
             )}
             
-            {/* Mark as Done Button for Companies (only on in transit items) */}
+            {/* Scan QR Button for Companies (only on in transit items) */}
             {userRole === 'company' && item.status === 'in transit' && (
               <button
-                onClick={handleMarkAsDone}
-                disabled={isMarkingAsDone}
+                onClick={handleScanQR}
                 className="flex items-center px-3 py-1 !bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <CheckCircle className="w-3 h-3 mr-1" />
-                {isMarkingAsDone ? 'Marking...' : 'Mark as Done'}
+                <Scan className="w-3 h-3 mr-1" />
+                Complete Item
               </button>
             )}
             
@@ -413,6 +421,16 @@ const ItemCard = ({ item, userRole, onItemUpdate }) => {
           </div>
         )}
       </div>
+
+              {/* QR Scan Modal */}
+        {showQRScanModal && (
+          <QRScanModal
+            isOpen={showQRScanModal}
+            onClose={handleQRScanModalClose}
+            item={item}
+            onItemUpdate={onItemUpdate}
+          />
+        )}
     </div>
   );
 };

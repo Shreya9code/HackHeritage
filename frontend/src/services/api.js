@@ -39,6 +39,23 @@ export const ewasteAPI = {
     }
   },
 
+  // Update status with role-based validation
+  updateStatusWithRole: async (qrId, role, licenseNo, registrationNo) => {
+    try {
+      const response = await api.post('/ewastes/update-status', {
+        qrId,
+        role,
+        licenseNo,
+        registrationNo
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to update status"
+      );
+    }
+  },
+
   // Accept e-waste item (vendor function)
   acceptItem: async (itemId, vendorId, notes = "") => {
     try {

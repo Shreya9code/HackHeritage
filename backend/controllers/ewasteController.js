@@ -1,5 +1,7 @@
 const Ewaste = require('../models/EWaste');
 const Donor = require('../models/Donor');
+const Vendor = require('../models/Vendor');
+const Company = require('../models/Company');
 
 // Donor reports e-waste
 exports.createEwaste = async (req, res) => {
@@ -259,5 +261,143 @@ exports.getEwasteByDonorId = async (req, res) => {
   } catch (err) {
     console.error('❌ Error in getEwasteByDonorId:', err);
     res.status(500).json({ error: err.message });
+  }
+};
+
+// Update status with role-based validation
+exports.updateStatusWithRole = async (req, res) => {
+  try {
+    const { qrId, role, licenseNo, registrationNo } = req.body;
+    
+    console.log('🔄 Role-based status update request:', { qrId, role, licenseNo, registrationNo });
+    
+    // Validate required fields
+    if (!qrId || !role) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'QR ID and role are required' 
+      });
+    }
+    
+    // Find the e-waste item
+    const ewaste = await Ewaste.findById(qrId);
+    if (!ewaste) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'E-waste item not found' 
+      });
+    }
+    
+    console.log('📦 Found e-waste item:', { serial: ewaste.serial, status: ewaste.status });
+    
+    if (role === 'vendor') {
+      // Vendor flow: validate license number and update to "In Transit"
+      if (!licenseNo) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'License number is required for vendor role' 
+        });
+      }
+      
+      // Check if item status is "Waiting for Pick Up"
+      if (ewaste.status !== 'waiting for pickup') {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid status transition. Only items with status "Waiting for Pick Up" can be updated by vendors.' 
+        });
+      }
+      
+      // Validate vendor license number
+      const vendor = await Vendor.findOne({ licenseNumber: licenseNo });
+      if (!vendor) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'No vendor found with that license number' 
+        });
+      }
+      
+      console.log('✅ Vendor validated:', vendor.name);
+      
+      // Update e-waste status to "In Transit"
+      const updatedEwaste = await Ewaste.findByIdAndUpdate(
+        qrId,
+        { 
+          status: 'in transit',
+          inTransitBy: vendor.clerkId,
+          inTransitAt: new Date(),
+          inTransitNotes: `Item picked up by vendor ${vendor.name} (${licenseNo})`,
+          updatedAt: new Date()
+        },
+        { new: true }
+      );
+      
+      console.log('✅ Status updated to In Transit for vendor');
+      res.status(200).json({ 
+        success: true, 
+        newStatus: 'In Transit',
+        message: 'Status updated to In Transit'
+      });
+      
+    } else if (role === 'company') {
+      // Company flow: validate registration number and update to "Done"
+      if (!registrationNo) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Registration number is required for company role' 
+        });
+      }
+      
+      // Check if item status is "In Transit"
+      if (ewaste.status !== 'in transit') {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid status transition. Only items with status "In Transit" can be completed by companies.' 
+        });
+      }
+      
+      // Validate company registration number
+      const company = await Company.findOne({ registrationNumber: registrationNo });
+      if (!company) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'No company found with that registration number' 
+        });
+      }
+      
+      console.log('✅ Company validated:', company.name);
+      
+      // Update e-waste status to "Done"
+      const updatedEwaste = await Ewaste.findByIdAndUpdate(
+        qrId,
+        { 
+          status: 'done',
+          completedBy: company.clerkId,
+          completedAt: new Date(),
+          completionNotes: `Item processed by company ${company.name} (${registrationNo})`,
+          updatedAt: new Date()
+        },
+        { new: true }
+      );
+      
+      console.log('✅ Status updated to Done for company');
+      res.status(200).json({ 
+        success: true, 
+        newStatus: 'Done',
+        message: 'Status updated to Done'
+      });
+      
+    } else {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid role. Must be either "vendor" or "company"' 
+      });
+    }
+    
+  } catch (err) {
+    console.error('❌ Error in updateStatusWithRole:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error' 
+    });
   }
 };
