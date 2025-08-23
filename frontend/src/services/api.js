@@ -58,9 +58,13 @@ export const ewasteAPI = {
   // Get e-waste items by donor ID (Clerk ID)
   getByDonorId: async (donorId) => {
     try {
+      console.log('🌐 API: Calling getByDonorId with donorId:', donorId);
       const response = await api.get(`/ewastes/donor/${donorId}`);
+      console.log('🌐 API: Response received:', response.data.length, 'items');
+      console.log('🌐 API: Response data:', response.data);
       return response.data;
     } catch (error) {
+      console.error('🌐 API: Error in getByDonorId:', error);
       throw new Error(error.response?.data?.error || 'Failed to fetch donor e-waste items');
     }
   },

@@ -83,9 +83,66 @@ exports.updateStatusBySerial = async (req, res) => {
 exports.getEwasteByDonorId = async (req, res) => {
   try {
     const { donorId } = req.params;
-    const ewastes = await Ewaste.find({ donorId });
-    res.status(200).json(ewastes);
+    console.log('🔍 Fetching e-waste items for donor ID:', donorId);
+    
+    // First, let's see what's in the database
+    const allEwastes = await Ewaste.find();
+    console.log('📊 Total e-waste items in database:', allEwastes.length);
+    
+    // Check for items without donorId
+    const itemsWithoutDonorId = allEwastes.filter(item => !item.donorId);
+    if (itemsWithoutDonorId.length > 0) {
+      console.log('⚠️  WARNING: Found items without donorId:', itemsWithoutDonorId.map(item => ({ serial: item.serial, _id: item._id })));
+    }
+    
+    console.log('📋 All items donor IDs:', allEwastes.map(item => ({ serial: item.serial, donorId: item.donorId })));
+    
+    // Try multiple filtering approaches to ensure we get the right results
+    
+    // Method 1: Direct MongoDB query
+    const mongoQuery = { donorId: donorId };
+    console.log('🔍 MongoDB query being used:', JSON.stringify(mongoQuery));
+    const ewastesFromMongo = await Ewaste.find(mongoQuery);
+    console.log('📦 MongoDB query returned:', ewastesFromMongo.length, 'items');
+    
+    // Method 2: Manual JavaScript filtering (exact match)
+    const exactMatch = allEwastes.filter(item => item.donorId === donorId);
+    console.log('🔍 Exact match found:', exactMatch.length, 'items');
+    
+    // Method 3: Case-insensitive matching (in case there are case differences)
+    const caseInsensitiveMatch = allEwastes.filter(item => 
+      item.donorId && item.donorId.toLowerCase() === donorId.toLowerCase()
+    );
+    console.log('🔍 Case-insensitive match found:', caseInsensitiveMatch.length, 'items');
+    
+    // Method 4: Trimmed matching (in case there are whitespace issues)
+    const trimmedMatch = allEwastes.filter(item => 
+      item.donorId && item.donorId.trim() === donorId.trim()
+    );
+    console.log('🔍 Trimmed match found:', trimmedMatch.length, 'items');
+    
+    // Use the most restrictive result to ensure we don't show other donors' items
+    let finalResults = exactMatch;
+    
+    // If exact match is empty but we have other matches, log a warning
+    if (exactMatch.length === 0 && (caseInsensitiveMatch.length > 0 || trimmedMatch.length > 0)) {
+      console.log('⚠️  WARNING: Exact match failed but found matches with other methods!');
+      console.log('This suggests there might be data inconsistency in the database.');
+      console.log('Using exact match (empty result) to ensure security.');
+    }
+    
+    // If we still have no results, double-check by logging all donor IDs
+    if (finalResults.length === 0) {
+      console.log('🔍 No items found for donor ID:', donorId);
+      console.log('🔍 All unique donor IDs in database:', [...new Set(allEwastes.map(item => item.donorId).filter(Boolean))]);
+    }
+    
+    console.log('✅ Final result - items for donor', donorId, ':', finalResults.length);
+    console.log('📦 Final items:', finalResults.map(item => ({ serial: item.serial, donorId: item.donorId })));
+    
+    res.status(200).json(finalResults);
   } catch (err) {
+    console.error('❌ Error in getEwasteByDonorId:', err);
     res.status(500).json({ error: err.message });
   }
 };

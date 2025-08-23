@@ -13,6 +13,7 @@ const Inventory = () => {
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState('');
+  const [error, setError] = useState('');
   const { user } = useUser();
 
   // Get user role on component mount
@@ -27,15 +28,27 @@ const Inventory = () => {
       if (!user) return;
       
       setIsLoading(true);
+      setError('');
+      
+      console.log('🔍 Fetching items for user:', {
+        userId: user.id,
+        userRole: userRole,
+        userEmail: user.primaryEmailAddress?.emailAddress
+      });
+      
       try {
         let fetchedItems;
         
         if (userRole === 'donor') {
           // For donors, fetch their own items using Clerk ID
+          console.log('👤 Fetching items for donor with ID:', user.id);
           fetchedItems = await ewasteAPI.getByDonorId(user.id);
+          console.log('📦 Received items for donor:', fetchedItems.length);
         } else {
           // For vendors and companies, fetch all items
+          console.log('🏭 Fetching all items for vendor/company');
           fetchedItems = await ewasteAPI.getAll();
+          console.log('📦 Received all items:', fetchedItems.length);
         }
         
         // Transform the data to match the expected format
@@ -57,29 +70,34 @@ const Inventory = () => {
           donorId: item.donorId // Include donor ID for vendor/admin view
         }));
         
-        setItems(transformedItems);
+        // SECURITY CHECK: For donors, ensure they only see their own items
+        let finalItems = transformedItems;
+        if (userRole === 'donor') {
+          const userItems = transformedItems.filter(item => item.donorId === user.id);
+          const otherItems = transformedItems.filter(item => item.donorId !== user.id);
+          
+          if (otherItems.length > 0) {
+            console.warn('⚠️  SECURITY WARNING: Backend returned items from other donors!');
+            console.warn('Filtering out items from other donors:', otherItems.map(item => ({ serial: item.serial, donorId: item.donorId })));
+            console.warn('User ID:', user.id);
+            console.warn('Items that should not be shown:', otherItems.length);
+          }
+          
+          finalItems = userItems;
+          console.log('🔒 Security check: Showing only user items:', finalItems.length);
+        }
+        
+        console.log('🔄 Transformed items:', finalItems.map(item => ({ 
+          serial: item.serial, 
+          donorId: item.donorId,
+          name: item.name 
+        })));
+        
+        setItems(finalItems);
       } catch (error) {
         console.error('Error fetching items:', error);
-        // For now, use localStorage items as fallback
-        const storedItems = JSON.parse(localStorage.getItem('ewaste_items') || '[]');
-        const transformedStoredItems = storedItems.map(item => ({
-          id: item.serial,
-          name: item.type,
-          model: 'N/A',
-          brand: 'N/A',
-          category: item.classification || 'recyclable',
-          weight: `${item.weightValue} ${item.weightUnit}`,
-          condition: item.condition || 'Unknown',
-          status: item.status,
-          dateAdded: new Date(item.createdAt).toLocaleDateString(),
-          serial: item.serial,
-          pickupAddress: item.pickupAddress,
-          estimatedPrice: item.estimatedPrice,
-          shortNote: '',
-          age: '',
-          donorId: item.donorId || 'Unknown'
-        }));
-        setItems(transformedStoredItems);
+        setError('Failed to fetch items. Please try again.');
+        setItems([]); // Set empty array instead of fallback to localStorage
       } finally {
         setIsLoading(false);
       }
@@ -106,6 +124,8 @@ const Inventory = () => {
       if (!user) return;
       
       setIsLoading(true);
+      setError('');
+      
       try {
         let fetchedItems;
         
@@ -133,9 +153,24 @@ const Inventory = () => {
           donorId: item.donorId
         }));
         
-        setItems(transformedItems);
+        // SECURITY CHECK: For donors, ensure they only see their own items
+        let finalItems = transformedItems;
+        if (userRole === 'donor') {
+          const userItems = transformedItems.filter(item => item.donorId === user.id);
+          const otherItems = transformedItems.filter(item => item.donorId !== user.id);
+          
+          if (otherItems.length > 0) {
+            console.warn('⚠️  SECURITY WARNING: Backend returned items from other donors during refresh!');
+            console.warn('Filtering out items from other donors:', otherItems.map(item => ({ serial: item.serial, donorId: item.donorId })));
+          }
+          
+          finalItems = userItems;
+        }
+        
+        setItems(finalItems);
       } catch (error) {
         console.error('Error refreshing items:', error);
+        setError('Failed to refresh items. Please try again.');
       } finally {
         setIsLoading(false);
       }
@@ -196,6 +231,19 @@ const Inventory = () => {
         </div>
       </div>
 
+      {/* Error Display */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-800">{error}</p>
+          <button
+            onClick={handleRefresh}
+            className="mt-2 text-red-600 hover:text-red-800 underline"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
       {/* Filters */}
       <CategoryFilter 
         onFilterChange={handleFilterChange}
@@ -214,7 +262,7 @@ const Inventory = () => {
       )}
 
       {/* Items Grid */}
-      {!isLoading && (
+      {!isLoading && !error && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredItems.map(item => (
             <ItemCard key={item.id} item={item} />
@@ -223,22 +271,22 @@ const Inventory = () => {
       )}
 
       {/* Empty State */}
-      {!isLoading && filteredItems.length === 0 && (
+      {!isLoading && !error && filteredItems.length === 0 && (
         <div className="text-center py-12">
           <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
             <Plus className="w-12 h-12 text-gray-400" />
           </div>
-                     <h3 className="text-lg font-medium text-gray-900 mb-2">
-             {searchQuery ? 'No items found' : userRole === 'donor' ? 'No e-waste items submitted yet' : 'No e-waste items reported yet'}
-           </h3>
-           <p className="text-gray-500 mb-4">
-             {searchQuery 
-               ? 'Try adjusting your search query' 
-               : userRole === 'donor' 
-                 ? 'Start by generating a QR code for your e-waste item' 
-                 : 'No donors have submitted e-waste items yet'
-             }
-           </p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {searchQuery ? 'No items found' : userRole === 'donor' ? 'No e-waste items submitted yet' : 'No e-waste items reported yet'}
+          </h3>
+          <p className="text-gray-500 mb-4">
+            {searchQuery 
+              ? 'Try adjusting your search query' 
+              : userRole === 'donor' 
+                ? 'Start by generating a QR code for your e-waste item' 
+                : 'No donors have submitted e-waste items yet'
+            }
+          </p>
           {userRole === 'donor' ? (
             <button
               onClick={() => window.location.href = '/qr-generator'}
