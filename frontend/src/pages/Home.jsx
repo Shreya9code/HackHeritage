@@ -85,7 +85,7 @@ const Home = () => {
       
       {/* Main Content - No Sidebar */}
       <div className="main-content relative z-10 flex flex-1 flex-col">
-        <Header showAuthButtons={true} />
+        <Header />
         <div className="flex-1 p-6">
           <div className="mx-auto max-w-7xl space-y-6">
             {activePage === 'dashboard' && <HeroSection />}

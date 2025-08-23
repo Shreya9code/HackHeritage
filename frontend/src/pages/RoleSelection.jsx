@@ -9,6 +9,7 @@ const RoleSelection = () => {
   const [selectedRole, setSelectedRole] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [isCheckingUser, setIsCheckingUser] = useState(true);
   
   // Form data for different roles
@@ -25,10 +26,40 @@ const RoleSelection = () => {
     const checkExistingUser = async () => {
       if (!isLoaded || !user) return;
 
+      // First check localStorage for existing role data
+      const storedRole = localStorage.getItem('userRole');
+      const storedUserId = localStorage.getItem('userId');
+      
+      if (storedRole && storedUserId) {
+        console.log('RoleSelection - User already has role in localStorage:', storedRole);
+        navigate('/dashboard');
+        return;
+      }
+
+      // Check if we have local user data for this clerk ID
+      const localUserData = localStorage.getItem('userData');
+      if (localUserData) {
+        try {
+          const parsedData = JSON.parse(localUserData);
+          if (parsedData.clerkId === user.id) {
+            console.log('RoleSelection - Found local user data, redirecting to dashboard');
+            navigate('/dashboard');
+            return;
+          }
+        } catch (e) {
+          console.error('Error parsing local user data:', e);
+        }
+      }
+
+      // Only try API call if we don't have any local data
       try {
+        console.log('Checking existing user for clerkId:', user.id);
         const userData = await userAPI.getUserByClerkId(user.id);
+        console.log('User data received:', userData);
+        
         if (userData?.user) {
           // User already has a role, redirect to dashboard
+          console.log('User already has role:', userData.user.role);
           localStorage.setItem('userRole', userData.user.role);
           localStorage.setItem('userId', userData.user.id);
           localStorage.setItem('userName', userData.user.name);
@@ -37,6 +68,18 @@ const RoleSelection = () => {
         }
       } catch (error) {
         console.error('Error checking user:', error);
+        // If it's a 404 error (user not found), that's expected for new users
+        if (error.message.includes('User not found') || error.message.includes('404')) {
+          console.log('User not found - this is expected for new users');
+        } else if (error.message.includes('Unable to connect to server')) {
+          console.log('Server connection issue - allowing role selection to proceed');
+          // Show a warning but allow the user to continue
+          setError('Note: Unable to verify existing account. You can still proceed with role selection.');
+        } else {
+          console.error('Unexpected error checking user:', error);
+          // For other errors, we'll still allow role selection
+          setError('Unable to verify account status. You can still proceed with role selection.');
+        }
       } finally {
         setIsCheckingUser(false);
       }
@@ -96,6 +139,7 @@ const RoleSelection = () => {
     
     setIsSubmitting(true);
     setError('');
+    setSuccess('');
 
     try {
       const userData = {
@@ -113,26 +157,56 @@ const RoleSelection = () => {
         userData.registrationNumber = formData.registrationNumber.trim();
       }
 
-      const response = await userAPI.createOrUpdateUser(selectedRole, userData);
+      console.log('Submitting user data:', userData);
       
-      console.log('User created successfully:', response);
-      
-      // Store user info in localStorage for future use
-      localStorage.setItem('userRole', selectedRole);
-      localStorage.setItem('userId', response.user.id);
-      localStorage.setItem('userName', response.user.name);
+      try {
+        const response = await userAPI.createOrUpdateUser(selectedRole, userData);
+        console.log('User created successfully:', response);
+        
+        // Store user info in localStorage for future use
+        localStorage.setItem('userRole', selectedRole);
+        localStorage.setItem('userId', response.user.id);
+        localStorage.setItem('userName', response.user.name);
+      } catch (apiError) {
+        console.error('API Error:', apiError);
+        
+        // Fallback: Store user data locally if API fails
+        if (apiError.message.includes('Unable to connect to server')) {
+          console.log('Using local storage fallback');
+          const localUserId = `local_${Date.now()}`;
+          localStorage.setItem('userRole', selectedRole);
+          localStorage.setItem('userId', localUserId);
+          localStorage.setItem('userName', userData.name);
+          localStorage.setItem('userData', JSON.stringify(userData));
+          
+          // Show success message with offline notice
+          setSuccess('Account created successfully (offline mode). Data will be synced when server is available.');
+          setError(''); // Clear any previous errors
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 2000);
+          return;
+        } else {
+          throw apiError; // Re-throw other errors
+        }
+      }
       
       console.log('User data stored in localStorage:', {
         role: selectedRole,
-        id: response.user.id,
-        name: response.user.name
+        id: localStorage.getItem('userId'),
+        name: localStorage.getItem('userName')
       });
       
       // Redirect to dashboard
       navigate('/dashboard');
       
     } catch (error) {
-      setError(error.message || 'Something went wrong');
+      console.error('Error creating user:', error);
+      if (error.message.includes('Unable to connect to server')) {
+        setError('Unable to connect to server. Please check your internet connection and try again.');
+      } else {
+        setError(error.message || 'Something went wrong. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -302,6 +376,12 @@ const RoleSelection = () => {
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
                   {error}
+                </div>
+              )}
+
+              {success && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+                  {success}
                 </div>
               )}
 

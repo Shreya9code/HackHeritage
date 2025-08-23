@@ -36,8 +36,8 @@ function App() {
       navigate={(to) => {
         // Handle navigation after authentication
         if (to === '/') {
-          // After signup/signin, redirect to role selection
-          window.location.href = '/role-selection';
+          // After signup/signin, redirect to dashboard
+          window.location.href = '/dashboard';
         } else {
           window.location.href = to;
         }

@@ -1,21 +1,42 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { useUser, SignOutButton } from '@clerk/clerk-react';
+import { Link, useLocation } from 'react-router-dom';
 
-const Header = ({ onMenuToggle, showAuthButtons = false }) => {
-  const { user, isLoaded } = useUser();
+const Header = ({ onMenuToggle }) => {
+  const { user } = useUser();
+  const location = useLocation();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [userRole, setUserRole] = useState('');
   const [userName, setUserName] = useState('');
+  const [userRole, setUserRole] = useState('');
 
   useEffect(() => {
-    if (isLoaded && user) {
-      setUserName(user.fullName || user.primaryEmailAddress?.emailAddress || 'User');
-      const role = localStorage.getItem('userRole');
-      setUserRole(role || '');
+    // Get user info from localStorage
+    const storedName = localStorage.getItem('userName');
+    const storedRole = localStorage.getItem('userRole');
+    
+    if (storedName) {
+      setUserName(storedName);
+    } else if (user?.fullName) {
+      setUserName(user.fullName);
     }
-  }, [isLoaded, user]);
+    
+    if (storedRole) {
+      setUserRole(storedRole);
+    }
+  }, [user]);
+
+  const handleSignOut = () => {
+    // Clear all localStorage data
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userData');
+    console.log('LocalStorage cleared on sign out');
+  };
+
+  // Show auth buttons only on home page
+  const showAuthButtons = location.pathname === '/';
 
   return (
     <header className="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
@@ -119,7 +140,7 @@ const Header = ({ onMenuToggle, showAuthButtons = false }) => {
                    <button className="w-full text-left px-4 py-2 text-sm hover:!bg-gray-50 flex items-center">
                      <i className="fas fa-cog mr-2 text-gray-500"></i> Settings
                    </button>
-                   <SignOutButton>
+                   <SignOutButton signOutCallback={handleSignOut}>
                      <button className="w-full text-left px-4 py-2 text-sm hover:!bg-gray-50 flex items-center text-red-600">
                        <i className="fas fa-sign-out-alt mr-2"></i> Sign Out
                      </button>

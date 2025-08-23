@@ -35,33 +35,50 @@ const ProtectedRoute = ({ children }) => {
       console.log('ProtectedRoute - Checking localStorage:', { storedRole, storedUserId });
       
       if (storedRole && storedUserId) {
-        // User has role data in localStorage, allow access
+        // User has role data in localStorage, allow access immediately
         console.log('ProtectedRoute - User has role data in localStorage, allowing access');
         setIsChecking(false);
         return;
       }
 
+      // Check if we have local user data for this clerk ID
+      const localUserData = localStorage.getItem('userData');
+      if (localUserData) {
+        try {
+          const parsedData = JSON.parse(localUserData);
+          if (parsedData.clerkId === user.id) {
+            // We have local data for this user, allow access
+            console.log('ProtectedRoute - Using local data for offline mode');
+            setIsChecking(false);
+            return;
+          }
+        } catch (e) {
+          console.error('Error parsing local user data:', e);
+        }
+      }
+
+      // Only try API call if we don't have any local data
       try {
-        // Check if user has already selected a role
+        console.log('ProtectedRoute - No local data found, checking API...');
         const userData = await userAPI.getUserByClerkId(user.id);
         
-        if (!userData?.user) {
-          // User hasn't selected a role yet, redirect to role selection
-          navigate('/role-selection');
+        if (userData?.user) {
+          // Store user role and ID in localStorage for future use
+          localStorage.setItem('userRole', userData.user.role);
+          localStorage.setItem('userId', userData.user.id);
+          localStorage.setItem('userName', userData.user.name);
+          
+          setIsChecking(false);
           return;
         }
-
-        // Store user role and ID in localStorage for future use
-        localStorage.setItem('userRole', userData.user.role);
-        localStorage.setItem('userId', userData.user.id);
-        localStorage.setItem('userName', userData.user.name);
-        
-        setIsChecking(false);
       } catch (error) {
         console.error('Error checking user role:', error);
-        // If there's an error and no stored data, redirect to role selection
-        navigate('/role-selection');
+        // If API fails, we'll redirect to role selection
       }
+      
+      // If we get here, user needs to select a role
+      console.log('ProtectedRoute - Redirecting to role selection');
+      navigate('/role-selection');
     };
 
     checkUserRole();

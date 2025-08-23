@@ -145,9 +145,15 @@ export const userAPI = {
   // Create or update user based on role
   createOrUpdateUser: async (role, userData) => {
     try {
+      console.log('API: Creating/updating user with role:', role, 'data:', userData);
       const response = await api.post(`/users/${role}`, userData);
+      console.log('API: User creation response:', response.data);
       return response.data;
     } catch (error) {
+      console.error('API: Error creating/updating user:', error);
+      if (error.code === 'ERR_NETWORK' || error.message.includes('ERR_CONNECTION_REFUSED')) {
+        throw new Error('Unable to connect to server. Please check your internet connection and try again.');
+      }
       throw new Error(
         error.response?.data?.error || "Failed to create/update user"
       );
@@ -157,11 +163,17 @@ export const userAPI = {
   // Get user by Clerk ID
   getUserByClerkId: async (clerkId) => {
     try {
+      console.log('API: Fetching user for clerkId:', clerkId);
       const response = await api.get(`/users/clerk/${clerkId}`);
+      console.log('API: Response received:', response.data);
       return response.data;
     } catch (error) {
+      console.error('API: Error fetching user:', error);
       if (error.response?.status === 404) {
         return null; // User not found
+      }
+      if (error.code === 'ERR_NETWORK' || error.message.includes('ERR_CONNECTION_REFUSED')) {
+        throw new Error('Unable to connect to server. Please check your internet connection and try again.');
       }
       throw new Error(error.response?.data?.error || "Failed to fetch user");
     }

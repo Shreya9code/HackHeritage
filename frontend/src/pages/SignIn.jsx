@@ -9,8 +9,8 @@ function SignInPage() {
         <div className="w-1/2 flex items-center justify-center p-10">
           <SignIn 
             routing="hash" 
-            redirectUrl="/role-selection"
-            afterSignInUrl="/role-selection"
+            redirectUrl="/dashboard"
+            afterSignInUrl="/dashboard"
           />
         </div>
 
