@@ -79,6 +79,39 @@ exports.updateStatusBySerial = async (req, res) => {
   }
 };
 
+// Accept e-waste item (vendor function) - change status to "waiting for pickup"
+exports.acceptEwasteItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { vendorId, notes } = req.body;
+    
+    console.log('🏭 Vendor accepting e-waste item:', { itemId: id, vendorId, notes });
+    
+    // Find and update the item status
+    const ewaste = await Ewaste.findByIdAndUpdate(
+      id,
+      { 
+        status: 'waiting for pickup',
+        vendorAcceptedBy: vendorId,
+        vendorAcceptedAt: new Date(),
+        vendorNotes: notes,
+        updatedAt: new Date()
+      },
+      { new: true }
+    );
+    
+    if (!ewaste) {
+      return res.status(404).json({ message: 'E-waste item not found' });
+    }
+    
+    console.log('✅ Item accepted by vendor successfully:', ewaste.serial, 'Status:', ewaste.status);
+    res.status(200).json(ewaste);
+  } catch (err) {
+    console.error('❌ Error accepting e-waste item:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // Get e-waste items by donor ID (Clerk ID)
 exports.getEwasteByDonorId = async (req, res) => {
   try {

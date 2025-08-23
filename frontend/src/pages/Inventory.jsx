@@ -67,7 +67,11 @@ const Inventory = () => {
           estimatedPrice: item.estimatedPrice,
           shortNote: item.shortNote,
           age: item.age,
-          donorId: item.donorId // Include donor ID for vendor/admin view
+          donorId: item.donorId, // Include donor ID for vendor/admin view
+          // Vendor acceptance fields
+          vendorAcceptedBy: item.vendorAcceptedBy,
+          vendorAcceptedAt: item.vendorAcceptedAt,
+          vendorNotes: item.vendorNotes
         }));
         
         // SECURITY CHECK: For donors, ensure they only see their own items
@@ -110,6 +114,18 @@ const Inventory = () => {
     setItems(prev => [newItem, ...prev]);
   };
 
+  const handleItemUpdate = (updatedItem) => {
+    setItems(prev => prev.map(item => 
+      item.id === updatedItem._id ? {
+        ...item,
+        status: updatedItem.status,
+        vendorAcceptedBy: updatedItem.vendorAcceptedBy,
+        vendorAcceptedAt: updatedItem.vendorAcceptedAt,
+        vendorNotes: updatedItem.vendorNotes
+      } : item
+    ));
+  };
+
   const handleFilterChange = (newFilter) => {
     setFilter(newFilter);
   };
@@ -150,7 +166,11 @@ const Inventory = () => {
           estimatedPrice: item.estimatedPrice,
           shortNote: item.shortNote,
           age: item.age,
-          donorId: item.donorId
+          donorId: item.donorId,
+          // Vendor acceptance fields
+          vendorAcceptedBy: item.vendorAcceptedBy,
+          vendorAcceptedAt: item.vendorAcceptedAt,
+          vendorNotes: item.vendorNotes
         }));
         
         // SECURITY CHECK: For donors, ensure they only see their own items
@@ -265,7 +285,12 @@ const Inventory = () => {
       {!isLoading && !error && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredItems.map(item => (
-            <ItemCard key={item.id} item={item} />
+            <ItemCard 
+              key={item.id} 
+              item={item} 
+              userRole={userRole}
+              onItemUpdate={handleItemUpdate}
+            />
           ))}
         </div>
       )}

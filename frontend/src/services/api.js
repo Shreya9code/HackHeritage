@@ -35,6 +35,16 @@ export const ewasteAPI = {
     }
   },
 
+  // Accept e-waste item (vendor function)
+  acceptItem: async (itemId, vendorId, notes = '') => {
+    try {
+      const response = await api.put(`/ewastes/${itemId}/accept`, { vendorId, notes });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to accept item');
+    }
+  },
+
   // Create new e-waste item
   create: async (ewasteData) => {
     try {

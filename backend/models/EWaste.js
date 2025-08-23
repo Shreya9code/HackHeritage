@@ -19,6 +19,10 @@ const ewasteSchema = new mongoose.Schema({
   status: { type: String, enum: ['reported', 'waiting for pickup', 'in transit', 'processing', 'done'], default: 'reported' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+  // Vendor acceptance fields
+  vendorAcceptedBy: { type: String }, // Clerk ID of vendor who accepted
+  vendorAcceptedAt: { type: Date }, // When vendor accepted
+  vendorNotes: { type: String }, // Vendor notes when accepting
 });
 
 module.exports = mongoose.model('Ewaste', ewasteSchema);

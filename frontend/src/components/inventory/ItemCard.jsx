@@ -13,12 +13,19 @@ import {
   QrCode,
   CheckCircle,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  Check,
+  User,
+  Truck
 } from 'lucide-react';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
+import { ewasteAPI } from '../../services/api';
+import { useUser } from '@clerk/clerk-react';
 
-const ItemCard = ({ item }) => {
+const ItemCard = ({ item, userRole, onItemUpdate }) => {
   const [showQR, setShowQR] = useState(false);
+  const [isAccepting, setIsAccepting] = useState(false);
+  const { user } = useUser();
 
   const getIcon = (category) => {
     const icons = {
@@ -46,6 +53,26 @@ const ItemCard = ({ item }) => {
         return { color: 'text-orange-600', bg: 'bg-orange-100', icon: Clock, label: 'Reported' };
       default:
         return { color: 'text-gray-600', bg: 'bg-gray-100', icon: Clock, label: status || 'Unknown' };
+    }
+  };
+
+  const handleAcceptItem = async () => {
+    if (!user || !item.id) return;
+    
+    setIsAccepting(true);
+    try {
+      const updatedItem = await ewasteAPI.acceptItem(item.id, user.id, 'Item accepted by vendor');
+      console.log('✅ Item accepted successfully by vendor:', updatedItem);
+      
+      // Call the parent callback to update the item in the inventory
+      if (onItemUpdate) {
+        onItemUpdate(updatedItem);
+      }
+    } catch (error) {
+      console.error('❌ Error accepting item:', error);
+      alert('Failed to accept item. Please try again.');
+    } finally {
+      setIsAccepting(false);
     }
   };
 
@@ -142,36 +169,69 @@ const ItemCard = ({ item }) => {
           </div>
         )}
 
-                 {/* Notes */}
-         {item.shortNote && (
-           <div className="mb-4">
-             <p className="text-xs text-gray-500 mb-1">Notes</p>
-             <p className="text-sm font-medium">{item.shortNote}</p>
-           </div>
-         )}
+        {/* Notes */}
+        {item.shortNote && (
+          <div className="mb-4">
+            <p className="text-xs text-gray-500 mb-1">Notes</p>
+            <p className="text-sm font-medium">{item.shortNote}</p>
+          </div>
+        )}
 
-         {/* Donor ID (for vendors and companies) */}
-         {item.donorId && (
-           <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-             <p className="text-xs text-gray-500 mb-1">Donor ID</p>
-             <p className="text-sm font-mono font-medium text-blue-700">{item.donorId}</p>
-           </div>
-         )}
+        {/* Donor ID (for vendors and companies) */}
+        {item.donorId && (
+          <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+            <p className="text-xs text-gray-500 mb-1">Donor ID</p>
+            <p className="text-sm font-mono font-medium text-blue-700">{item.donorId}</p>
+          </div>
+        )}
 
-        {/* Status */}
+        {/* Vendor Acceptance Info */}
+        {item.vendorAcceptedBy && (
+          <div className="mb-4 p-3 bg-green-50 rounded-lg">
+            <p className="text-xs text-gray-500 mb-1">Accepted By Vendor</p>
+            <div className="flex items-center space-x-2">
+              <Truck className="w-4 h-4 text-green-600" />
+              <p className="text-sm font-medium text-green-700">{item.vendorAcceptedBy}</p>
+            </div>
+            {item.vendorAcceptedAt && (
+              <p className="text-xs text-green-600 mt-1">
+                {new Date(item.vendorAcceptedAt).toLocaleDateString()}
+              </p>
+            )}
+            {item.vendorNotes && (
+              <p className="text-xs text-green-600 mt-1">{item.vendorNotes}</p>
+            )}
+          </div>
+        )}
+
+        {/* Status and Actions */}
         <div className="flex items-center justify-between mb-4">
           <div className={`inline-flex items-center px-3 py-1 rounded-full ${StatusInfo.bg}`}>
             <StatusIcon className={`w-4 h-4 mr-1 ${StatusInfo.color}`} />
             <span className={`text-xs font-medium ${StatusInfo.color}`}>{StatusInfo.label}</span>
           </div>
           
-          <button 
-            onClick={() => setShowQR(!showQR)}
-            className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
-          >
-            <QrCode className="w-4 h-4 mr-1" />
-            {showQR ? 'Hide QR' : 'Show QR'}
-          </button>
+          <div className="flex items-center space-x-2">
+            {/* Accept Button for Vendors */}
+            {userRole === 'vendor' && item.status === 'reported' && (
+              <button
+                onClick={handleAcceptItem}
+                disabled={isAccepting}
+                className="flex items-center px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Check className="w-3 h-3 mr-1" />
+                {isAccepting ? 'Accepting...' : 'Accept'}
+              </button>
+            )}
+            
+            <button 
+              onClick={() => setShowQR(!showQR)}
+              className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
+            >
+              <QrCode className="w-4 h-4 mr-1" />
+              {showQR ? 'Hide QR' : 'Show QR'}
+            </button>
+          </div>
         </div>
 
         {/* QR Code */}
@@ -181,7 +241,7 @@ const ItemCard = ({ item }) => {
               <img 
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${item.serial || item.id}`} 
                 alt="QR Code" 
-                className="w-full h-full"
+                className="w-full h-full" 
               />
             </div>
             <p className="text-xs text-gray-500 mt-2">
