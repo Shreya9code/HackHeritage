@@ -14,7 +14,7 @@ import {
   Scan,
   User,
   Home,
-  Play
+  Play,Phone
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -35,6 +35,7 @@ const Sidebar = () => {
     const baseItems = [
       { path: "/dashboard", label: "Dashboard", icon: BarChart3 },
       { path: "/inventory", label: "Inventory", icon: Package },
+      { path: "/contact", label: "Contact", icon: Phone },
     ];
 
     switch (userRole) {
@@ -122,7 +123,7 @@ const Sidebar = () => {
               <>
                 <NavLink
                   to="/qr-generator"
-                  className="w-full !bg-emerald-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:bg-emerald-700 transition-colors mb-2 block"
+                  className="w-full !bg-emerald-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:!bg-emerald-700 transition-colors mb-2 block"
                 >
                   <QrCode className="w-4 h-4 mr-2" />
                   Generate QR Code
@@ -149,7 +150,7 @@ const Sidebar = () => {
              )}
             <NavLink
               to="/inventory"
-              className="w-full bg-gray-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:bg-gray-700 transition-colors block"
+              className="w-full !bg-gray-600 text-white py-2 px-3 rounded-lg text-sm flex items-center justify-center hover:!bg-gray-700 transition-colors block"
             >
               <Package className="w-4 h-4 mr-2" />
               View Inventory
