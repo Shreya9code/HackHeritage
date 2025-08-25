@@ -26,30 +26,80 @@ A comprehensive e-waste management system that uses QR codes to track the lifecy
 
 ## 🏗️ Architecture
 
-### Frontend (React + Vite)
+### Frontend (React + Vite)+ Backend (Node+ Express)
 ```
-frontend/
-├── src/
-│   ├── components/
-│   │   └── common/
-│   │       └── QRScanner.jsx          # QR code scanning component
-│   ├── pages/
-│   │   ├── QRGenerator.jsx            # QR code generation form
-│   │   └── Demo.jsx                   # Demo page for testing
-│   └── services/
-│       └── api.js                     # Backend API integration
-```
+ewaste-project/
+├── frontend/
+│   ├── public/
+│   └── src/
+│       ├── components/
+│       │   ├── campaigns/
+│       │   │   ├── CampaignCard.jsx
+│       │   │   └── ParticipationModal.jsx
+│       │   ├── common/
+│       │   │   ├── Header.jsx
+│       │   │   ├── Footer.jsx
+│       │   │   ├── Sidebar.jsx
+│       │   │   ├── AuthCallback.jsx
+│       │   │   ├── ClerkProvider.jsx
+│       │   │   ├── ProtectedRoute.jsx
+│       │   │   └── RedirectHandler.jsx
+│       │   ├── dashboard/
+│       │   │   ├── RecentActivity.jsx
+│       │   │   ├── StatsCard.jsx
+│       │   │   └── WasteChart.jsx
+│       │   ├── inventory/
+│       │   │   ├── AddItemModal.jsx
+│       │   │   ├── CategoryFilter.jsx
+│       │   │   ├── ItemCard.jsx
+│       │   │   └── QRScanModal.jsx
+│       ├── hooks/
+│       │   └── useAuth.js
+│       ├── pages/
+│       │   ├── Analytics.jsx
+│       │   ├── Campaigns.jsx
+│       │   ├── CompliNCe.jsx
+│       │   ├── ContactUs.jsx
+│       │   ├── Dashboard.jsx
+│       │   ├── Home.jsx
+│       │   ├── Inventory.jsx
+│       │   ├── QRGenerator.jsx
+│       │   ├── RoleSelection.jsx
+│       │   ├── SignIn.jsx
+│       │   └── SignUp.jsx
+│       ├── services/
+│       │   └── api.js
+│       ├── utils/
+│       │   └── api.js
+│       ├── App.jsx
+│       ├── App.css
+│       └── index.css
+│       └── main.jsx
+│     └── .env
+│
+├── backend/
+│   ├── config/
+│   │   └── db.js
+│   ├── controllers/
+│   │   ├── donorController.js
+│   │   └── ewasteController.js
+│   ├── middleware/
+│   │   └── auth.js
+│   ├── models/
+│   │   ├── Company.js
+│   │   ├── Donor.js
+│   │   ├── EWaste.js
+│   │   └── Vendor.js
+│   ├── routes/
+│   │   ├── companyRoutes.js
+│   │   ├── donorRoutes.js
+│   │   ├── ewasteRoute.js
+│   │   ├── items.js
+│   │   ├── userRoutes.js
+│   │   └── vendorRoutes.js
+│   └── server.js
+│   └── .env
 
-### Backend (Node.js + Express + MongoDB)
-```
-backend/
-├── controllers/
-│   └── ewasteController.js            # Business logic for e-waste operations
-├── models/
-│   └── EWaste.js                      # MongoDB schema definition
-├── routes/
-│   └── ewasteRoutes.js                # API endpoint definitions
-└── server.js                          # Express server setup
 ```
 
 ## 🔧 Installation & Setup

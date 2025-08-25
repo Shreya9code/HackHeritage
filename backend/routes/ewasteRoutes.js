@@ -13,5 +13,10 @@ router.put('/:id/accept', ewasteController.acceptEwasteItem); // vendor accepts 
 router.put('/:id/in-transit', ewasteController.updateToInTransit); // vendor updates to in transit
 router.put('/:id/done', ewasteController.updateToDone); // company marks as done
 router.post('/update-status', ewasteController.updateStatusWithRole); // new endpoint for role-based status updates
+//for removing item.js dont know if its needed
+// Basic CRUD routes (replacing items.js)
+router.get('/items', ewasteController.getAllItems);
+router.post('/items', ewasteController.addItem);
+router.get('/items/:id', ewasteController.getItemByIdWithDonor);
 
 module.exports = router;

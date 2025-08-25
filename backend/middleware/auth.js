@@ -12,8 +12,12 @@ const authenticateRequest = async (req, res, next) => {
       return res.status(401).json({ error: 'No token provided' });
     }
 
-    const token = authHeader.substring(7); // Remove "Bearer " prefix
-    
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : req.headers["clerk-session"];//authHeader.substring(7); // Remove "Bearer " prefix working
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
     // Verify the token with Clerk
     const session = await clerkClient.sessions.verifySession(token);
     
@@ -27,8 +31,10 @@ const authenticateRequest = async (req, res, next) => {
     // Attach user information to the request
     req.user = {
       clerkId: user.id,
-      email: user.emailAddresses[0]?.emailAddress,
-      name: `${user.firstName} ${user.lastName}`.trim()
+      email: user.emailAddresses[0]?.emailAddress||null,
+      //name: `${user.firstName} ${user.lastName}`.trim() //correct working
+      name: [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "Unknown User",
+      role: user.publicMetadata?.role || "donor" // optional by gpt
     };
 
     next();

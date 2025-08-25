@@ -348,8 +348,8 @@ const QRGenerator = () => {
       {notification && (
         <div className={`rounded-lg p-4 ${
           notification.type === 'success' 
-            ? 'bg-green-100 border border-green-300 text-green-800' 
-            : 'bg-blue-100 border border-blue-300 text-blue-800'
+            ? '!bg-green-100 border border-green-300 text-green-800' 
+            : '!bg-blue-100 border border-blue-300 text-blue-800'
         }`}>
           <div className="flex items-center justify-between">
             <span>{notification.message}</span>
@@ -366,7 +366,7 @@ const QRGenerator = () => {
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Form Section */}
         <div className="space-y-6">
-          <div className="rounded-xl border border-emerald-200 bg-white p-6 shadow-sm">
+          <div className="rounded-xl border border-emerald-200 !bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Item Information</h2>
             
             <div className="space-y-4">
@@ -529,7 +529,7 @@ const QRGenerator = () => {
                         {geminiClassification.classification?.hazardous?.percentage || 0}%
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full !bg-gray-200 rounded-full h-2">
                       <div 
                         className="!bg-red-500 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${geminiClassification.classification?.hazardous?.percentage || 0}%` }}
@@ -542,7 +542,7 @@ const QRGenerator = () => {
                         {geminiClassification.classification?.recyclable?.percentage || 0}%
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full !bg-gray-200 rounded-full h-2">
                       <div 
                         className="!bg-green-500 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${geminiClassification.classification?.recyclable?.percentage || 0}%` }}
@@ -580,7 +580,7 @@ const QRGenerator = () => {
 
                   {/* Environmental Impact */}
                   {geminiClassification.environmental_impact && (
-                    <div className="mt-3 p-3 bg-green-50 rounded border border-green-200">
+                    <div className="mt-3 p-3 !bg-green-50 rounded border border-green-200">
                       <h4 className="font-semibold text-green-800 mb-2">Environmental Impact:</h4>
                       <p className="text-sm text-green-700 mb-1">
                         <strong>CO₂ Saved:</strong> {geminiClassification.environmental_impact.co2_saved}
@@ -599,7 +599,7 @@ const QRGenerator = () => {
               <button
                 onClick={generateLabel}
                 disabled={isGenerating || !qrData.itemType || (qrData.itemType === 'Other' && !qrData.customItemType)}
-                className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white"
+                className="flex-1 rounded-lg !bg-emerald-600 px-4 py-2 font-semibold text-white"
               >
                 {isGenerating ? 'Generating...' : 'Generate Label'}
               </button>
@@ -678,7 +678,7 @@ const QRGenerator = () => {
                 <div className="text-center space-y-3">
                   <button
                     onClick={downloadLabel}
-                    className="w-full rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white"
+                    className="w-full rounded-lg !bg-emerald-600 px-4 py-2 font-semibold text-white"
                   >
                     Download Label PNG
                   </button>
@@ -687,12 +687,12 @@ const QRGenerator = () => {
                     <button
                       onClick={submitToDatabase}
                       disabled={isSubmitting}
-                      className="w-full rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 disabled:bg-blue-400"
+                      className="w-full rounded-lg !bg-blue-600 px-4 py-2 font-semibold text-white hover:!bg-blue-700 disabled:!bg-blue-400"
                     >
                       {isSubmitting ? 'Submitting...' : 'Submit Request'}
                     </button>
                   ) : (
-                    <div className="w-full rounded-lg bg-green-100 px-4 py-2 text-green-800 font-semibold">
+                    <div className="w-full rounded-lg !bg-green-100 px-4 py-2 text-green-800 font-semibold">
                       ✓ Submitted Successfully
                     </div>
                   )}
@@ -701,7 +701,7 @@ const QRGenerator = () => {
                 </div>
               </div>
             ) : (
-              <div className="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
+              <div className="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 !bg-gray-50">
                 <p className="text-gray-600">Fill the form and generate a label</p>
               </div>
             )}

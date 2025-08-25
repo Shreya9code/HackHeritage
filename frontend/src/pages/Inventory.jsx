@@ -1,3 +1,57 @@
+/*
+For viewing and managing e-waste items. Behavior changes depending on whether the user is a donor, vendor, or company.
+State Variables
+- isModalOpen → controls whether the "Add Item" modal is open.
+- filter → stores selected categories for filtering.
+- searchQuery → stores the search input.
+- items → array of e-waste items fetched from the backend.
+- isLoading → shows loading spinner when fetching items.
+- userRole → stores the role (donor, vendor, or company) from localStorage.
+- error → stores any API or fetch error message.
+- user → fetched from useUser() (Clerk), contains ID and email.
+
+Fetching Items
+- On mount (useEffect), it reads the user role from local storage.
+
+Then another useEffect fetches items based on role:
+- Donor: fetches only items they submitted (getByDonorId).
+- Vendor/Company: fetches all items (getAll).
+
+Transforms items to a standardized structure for the UI (maps fields like itemType, weightValue, status, vendorNotes, etc.).
+
+Security check: ensures donors only see their own items even if backend returns more.
+
+Item Operations
+- handleAddItem(newItem) → adds a new item to the top of the list after creation.
+- handleItemUpdate(updatedItem) → updates an existing item in the state when its status changes (vendor accepted, in-transit, done, etc.).
+- handleRefresh() → refetches items from the backend (like a manual "reload").
+
+Filtering & Search
+
+Filters items by:
+- Category selected in CategoryFilter component.
+- Search query matching name, model, brand, serial, pickupAddress, or donorId.
+
+Rendering
+- Header: shows title based on role and buttons:
+
+Refresh button
+- Add New Item button (only for vendors/companies)
+- Error Display: shows API errors with a retry button.
+- CategoryFilter component: lets user filter by category or search.
+- Loading State: spinner + message while fetching.
+- Items Grid: renders ItemCard for each filtered item.
+- Empty State: shows a friendly message when no items exist.
+
+Add Item Modal: modal to add new items, opens/closes via isModalOpen.
+
+Summary
+- Dashboard for e-waste items. It:
+- Fetches items from the backend.
+- Transforms and filters them.
+- Handles adding/updating items in real-time.
+- Shows loading, error, or empty states based on situation.
+- Adapts the UI based on user role.*/
 import { useState, useEffect } from 'react';
 import CategoryFilter from '../components/inventory/CategoryFilter';
 import ItemCard from '../components/inventory/ItemCard';
