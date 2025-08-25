@@ -1,3 +1,19 @@
+/*central API service layer
+E-Waste API Functions (ewasteAPI)- These handle all e-waste operations:
+- getBySerial(serial)- Fetch an item using its QR/serial number., Used when scanning QR codes.
+- updateStatusBySerial(serial, status)- Updates status (pending, in-transit, done) using serial.
+- updateStatusWithRole(qrId, role, licenseNo, registrationNo)- Role-based update (vendor or company) with validation.
+- acceptItem(itemId, vendorId, notes)- Vendor accepts a donor’s e-waste item.
+- updateToInTransit(itemId, vendorId, notes)- Vendor marks the item as in-transit.
+- markAsDone(itemId, companyId, notes)- Company marks the item as completed (recycled/disposed).
+- create(ewasteData)- Add a new e-waste item (used by vendors or companies).
+- getAll()- Fetch all items (for vendors and companies).
+- getByDonorId(donorId)- Fetch items submitted by a specific donor (used for donor view)., Includes console logs for debugging.
+
+User API Functions (userAPI)- handle user management:
+- createOrUpdateUser(role, userData)- Creates or updates a user in your backend based on their role (donor, vendor, company).
+- getUserByClerkId(clerkId)- Fetches a user by their Clerk ID., Returns null if the user doesn’t exist.
+*/
 import axios from "axios";
 
 const API_BASE_URL = "http://localhost:5000/api";
@@ -185,7 +201,7 @@ export const userAPI = {
 // 1. Using a different API key
 // 2. Implementing a queue system for API calls
 // 3. Increasing the MIN_CALL_INTERVAL value
-const GEMINI_API_KEY ="" //"AIzaSyAJiWbzaJJFQGwZAANH4uDKKIAsedDDqVI" //"AIzaSyA-e7XGdO-JGo9KphJmHzdD4TXo4I_ZfB4" //"AIzaSyDKsZdOXeRUTuNbXuREx0-Tfo5AHpga6rg";
+const GEMINI_API_KEY ="AIzaSyAJiWbzaJJFQGwZAANH4uDKKIAsedDDqVI" //"AIzaSyAJiWbzaJJFQGwZAANH4uDKKIAsedDDqVI" //"AIzaSyA-e7XGdO-JGo9KphJmHzdD4TXo4I_ZfB4" //"AIzaSyDKsZdOXeRUTuNbXuREx0-Tfo5AHpga6rg";
 const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
